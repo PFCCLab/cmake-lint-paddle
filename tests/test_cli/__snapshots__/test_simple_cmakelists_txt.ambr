@@ -1,0 +1,13 @@
+# serializer version: 1
+# name: test_invocation
+  dict({
+    'status': 0,
+    'stderr': list([
+      'Total Errors: 0',
+      '',
+    ]),
+    'stdout': list([
+      '',
+    ]),
+  })
+# ---

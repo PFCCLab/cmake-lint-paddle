@@ -1,5 +1,6 @@
 """
 Copyright 2009 Richard Quirk
+Copyright 2023 Nyakku Shigure, PaddlePaddle Authors
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
 use this file except in compliance with the License. You may obtain a copy of
@@ -11,6 +12,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 """
+
 from __future__ import annotations
 
 import getopt
@@ -146,6 +148,15 @@ class _CMakeLintState:
 
     def SetLineLength(self, linelength):
         self.linelength = int(linelength)
+
+    def reset(self):
+        self.filters = []
+        self.config = 0
+        self.errors = 0
+        self.spaces = 2
+        self.linelength = 80
+        self.allowed_categories = _ERROR_CATEGORIES.split()
+        self.quiet = False
 
 
 class _CMakePackageState:
