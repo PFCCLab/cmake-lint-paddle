@@ -38,6 +38,6 @@ jobs:
         run: |
           just lint
 
-      # - name: format check
-      #   run: |
-      #     just fmt
+      - name: format check
+        run: |
+          just fmt
