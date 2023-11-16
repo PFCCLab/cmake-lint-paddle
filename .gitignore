@@ -320,3 +320,4 @@ tags
 *.pyc
 .tox
 *.orig
+.vscode/*

@@ -79,4 +79,5 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
 known-first-party = ["cmakelint"]
