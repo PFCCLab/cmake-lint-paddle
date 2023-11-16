@@ -43,43 +43,43 @@ def test_upper_and_lowerCase():
 
 
 def test_contains_command():
-    assert cmakelint.__main__.ContainsCommand("project()")
-    assert cmakelint.__main__.ContainsCommand("project(")
-    assert cmakelint.__main__.ContainsCommand("project  ( ")
-    assert not cmakelint.__main__.ContainsCommand("VERSION")
+    assert cmakelint.__main__.contains_command("project()")
+    assert cmakelint.__main__.contains_command("project(")
+    assert cmakelint.__main__.contains_command("project  ( ")
+    assert not cmakelint.__main__.contains_command("VERSION")
 
 
 def test_get_command():
-    assert cmakelint.__main__.GetCommand("project()") == "project"
-    assert cmakelint.__main__.GetCommand("project(") == "project"
-    assert cmakelint.__main__.GetCommand("project  ( ") == "project"
-    assert cmakelint.__main__.GetCommand("VERSION") == ""
+    assert cmakelint.__main__.get_command("project()") == "project"
+    assert cmakelint.__main__.get_command("project(") == "project"
+    assert cmakelint.__main__.get_command("project  ( ") == "project"
+    assert cmakelint.__main__.get_command("VERSION") == ""
 
 
 def test_is_command_upper_case():
-    assert cmakelint.__main__.IsCommandUpperCase("PROJECT")
-    assert cmakelint.__main__.IsCommandUpperCase("CMAKE_MINIMUM_REQUIRED")
-    assert not cmakelint.__main__.IsCommandUpperCase("cmake_minimum_required")
-    assert not cmakelint.__main__.IsCommandUpperCase("project")
-    assert not cmakelint.__main__.IsCommandUpperCase("PrOjEct")
+    assert cmakelint.__main__.is_command_upper_case("PROJECT")
+    assert cmakelint.__main__.is_command_upper_case("CMAKE_MINIMUM_REQUIRED")
+    assert not cmakelint.__main__.is_command_upper_case("cmake_minimum_required")
+    assert not cmakelint.__main__.is_command_upper_case("project")
+    assert not cmakelint.__main__.is_command_upper_case("PrOjEct")
 
 
 def test_is_command_mixed_case():
-    assert cmakelint.__main__.IsCommandMixedCase("PrOjEct")
-    assert not cmakelint.__main__.IsCommandMixedCase("project")
-    assert not cmakelint.__main__.IsCommandMixedCase("CMAKE_MINIMUM_REQUIRED")
-    assert cmakelint.__main__.IsCommandMixedCase("CMAKE_MINIMUM_required")
+    assert cmakelint.__main__.is_command_mixed_case("PrOjEct")
+    assert not cmakelint.__main__.is_command_mixed_case("project")
+    assert not cmakelint.__main__.is_command_mixed_case("CMAKE_MINIMUM_REQUIRED")
+    assert cmakelint.__main__.is_command_mixed_case("CMAKE_MINIMUM_required")
 
 
 def test_clean_comment():
-    assert cmakelint.__main__.CleanComments("# Comment to zap") == ("", False)
-    assert cmakelint.__main__.CleanComments("project() # Comment to zap") == ("project()", False)
+    assert cmakelint.__main__.clean_comments("# Comment to zap") == ("", False)
+    assert cmakelint.__main__.clean_comments("project() # Comment to zap") == ("project()", False)
 
 
 def test_clean_comment_quotes():
-    assert cmakelint.__main__.CleanComments('CHECK_C_SOURCE_COMPILES("') == ('CHECK_C_SOURCE_COMPILES("', True)
-    assert cmakelint.__main__.CleanComments(" some line in a comment ", True) == ("", True)
-    assert cmakelint.__main__.CleanComments(' end of comment") ', True) == ('")', False)
+    assert cmakelint.__main__.clean_comments('CHECK_C_SOURCE_COMPILES("') == ('CHECK_C_SOURCE_COMPILES("', True)
+    assert cmakelint.__main__.clean_comments(" some line in a comment ", True) == ("", True)
+    assert cmakelint.__main__.clean_comments(' end of comment") ', True) == ('")', False)
 
 
 def test_command_spaces():
@@ -128,8 +128,8 @@ def test_find_tool():
 
 
 def test_is_find_package():
-    assert cmakelint.__main__.IsFindPackage("path/to/FindFOO.cmake")
-    assert not cmakelint.__main__.IsFindPackage("path/to/FeatureFOO.cmake")
+    assert cmakelint.__main__.is_find_package("path/to/FindFOO.cmake")
+    assert not cmakelint.__main__.is_find_package("path/to/FeatureFOO.cmake")
 
 
 def test_check_find_package():
@@ -176,11 +176,11 @@ def test_get_command_argument():
 
 
 def test_is_valid_file():
-    assert cmakelint.__main__.IsValidFile("CMakeLists.txt")
-    assert cmakelint.__main__.IsValidFile("cmakelists.txt")
-    assert cmakelint.__main__.IsValidFile("/foo/bar/baz/CMakeLists.txt")
-    assert cmakelint.__main__.IsValidFile("Findkk.cmake")
-    assert not cmakelint.__main__.IsValidFile("foobar.h.in")
+    assert cmakelint.__main__.is_valid_file("CMakeLists.txt")
+    assert cmakelint.__main__.is_valid_file("cmakelists.txt")
+    assert cmakelint.__main__.is_valid_file("/foo/bar/baz/CMakeLists.txt")
+    assert cmakelint.__main__.is_valid_file("Findkk.cmake")
+    assert not cmakelint.__main__.is_valid_file("foobar.h.in")
 
 
 def test_filter_control():
@@ -272,45 +272,45 @@ def test_parse_args():
         cmakelint.__main__._ERROR_CATEGORIES = ""
         cmakelint.__main__._VERSION = ""
         with nostderr():
-            pytest.raises(SystemExit, cmakelint.__main__.ParseArgs, [])
-            pytest.raises(SystemExit, cmakelint.__main__.ParseArgs, ["--help"])
-            pytest.raises(SystemExit, cmakelint.__main__.ParseArgs, ["--bogus-option"])
-            pytest.raises(SystemExit, cmakelint.__main__.ParseArgs, ["--filter="])
-            pytest.raises(SystemExit, cmakelint.__main__.ParseArgs, ["--filter=foo"])
-            pytest.raises(SystemExit, cmakelint.__main__.ParseArgs, ["--filter=+x,b,-c", "foo.cmake"])
-            pytest.raises(SystemExit, cmakelint.__main__.ParseArgs, ["--spaces=c", "foo.cmake"])
-            pytest.raises(SystemExit, cmakelint.__main__.ParseArgs, ["--version"])
+            pytest.raises(SystemExit, cmakelint.__main__.parse_args, [])
+            pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--help"])
+            pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--bogus-option"])
+            pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--filter="])
+            pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--filter=foo"])
+            pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--filter=+x,b,-c", "foo.cmake"])
+            pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--spaces=c", "foo.cmake"])
+            pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--version"])
         cmakelint.__main__._lint_state.filters = []
-        assert cmakelint.__main__.ParseArgs(["--filter=-whitespace", "foo.cmake"]) == ["foo.cmake"]
+        assert cmakelint.__main__.parse_args(["--filter=-whitespace", "foo.cmake"]) == ["foo.cmake"]
         cmakelint.__main__._lint_state.filters = []
-        assert cmakelint.__main__.ParseArgs(["foo.cmake"]) == ["foo.cmake"]
+        assert cmakelint.__main__.parse_args(["foo.cmake"]) == ["foo.cmake"]
         filt = "-,+whitespace"
         cmakelint.__main__._lint_state.filters = []
 
-        assert cmakelint.__main__.ParseArgs(["--config=None", "--spaces=3", "--filter=" + filt, "foo.cmake"]) == [
+        assert cmakelint.__main__.parse_args(["--config=None", "--spaces=3", "--filter=" + filt, "foo.cmake"]) == [
             "foo.cmake"
         ]
         assert cmakelint.__main__._lint_state.filters == ["-", "+whitespace"]
         assert cmakelint.__main__._lint_state.spaces == 3
         cmakelint.__main__._lint_state.filters = []
         filt = "-,+whitespace/eol, +whitespace/tabs"
-        assert cmakelint.__main__.ParseArgs(["--config=None", "--spaces=3", "--filter=" + filt, "foo.cmake"]) == [
+        assert cmakelint.__main__.parse_args(["--config=None", "--spaces=3", "--filter=" + filt, "foo.cmake"]) == [
             "foo.cmake"
         ]
         assert cmakelint.__main__._lint_state.filters == ["-", "+whitespace/eol", "+whitespace/tabs"]
 
         cmakelint.__main__._lint_state.filters = []
-        cmakelint.__main__.ParseArgs(["--config=./foo/bar", "foo.cmake"])
+        cmakelint.__main__.parse_args(["--config=./foo/bar", "foo.cmake"])
         assert cmakelint.__main__._lint_state.config == "./foo/bar"
-        cmakelint.__main__.ParseArgs(["--config=None", "foo.cmake"])
+        cmakelint.__main__.parse_args(["--config=None", "foo.cmake"])
         assert cmakelint.__main__._lint_state.config is None
-        cmakelint.__main__.ParseArgs(["foo.cmake"])
+        cmakelint.__main__.parse_args(["foo.cmake"])
         assert cmakelint.__main__._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
         config = {"return_value": True}
         patcher = mock.patch("os.path.isfile", **config)
         try:
             patcher.start()
-            assert cmakelint.__main__.ParseArgs([]) == ["CMakeLists.txt"]
+            assert cmakelint.__main__.parse_args([]) == ["CMakeLists.txt"]
             assert cmakelint.__main__._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
         finally:
             patcher.stop()
@@ -327,7 +327,7 @@ def testParseOptionsFile():
     try:
         cmakelint.__main__._USAGE = ""
         cmakelint.__main__._ERROR_CATEGORIES = ""
-        cmakelint.__main__.ParseOptionFile(
+        cmakelint.__main__.parse_option_file(
             """
                 # skip comment
                 filter=-,+whitespace
@@ -336,12 +336,12 @@ def testParseOptionsFile():
             ignore_space=False,
         )
         assert cmakelint.__main__._lint_state.filters == ["-", "+whitespace"]
-        cmakelint.__main__.ParseArgs(["--filter=+syntax", "foo.cmake"])
+        cmakelint.__main__.parse_args(["--filter=+syntax", "foo.cmake"])
         assert cmakelint.__main__._lint_state.filters == ["-", "+whitespace", "+syntax"]
         assert cmakelint.__main__._lint_state.spaces == 3
 
         cmakelint.__main__._lint_state.spaces = 2
-        cmakelint.__main__.ParseOptionFile(
+        cmakelint.__main__.parse_option_file(
             """
                 # skip comment
                 spaces= 4
@@ -350,7 +350,7 @@ def testParseOptionsFile():
         )
         assert cmakelint.__main__._lint_state.spaces == 2
 
-        cmakelint.__main__.ParseOptionFile(
+        cmakelint.__main__.parse_option_file(
             """
                 # skip comment
                 linelength= 90
@@ -359,7 +359,7 @@ def testParseOptionsFile():
         )
         assert cmakelint.__main__._lint_state.linelength == 90
 
-        cmakelint.__main__.ParseOptionFile(
+        cmakelint.__main__.parse_option_file(
             """
                 # skip comment
                 """.split("\n"),
@@ -367,7 +367,7 @@ def testParseOptionsFile():
         )
         assert cmakelint.__main__._lint_state.spaces == 2
 
-        cmakelint.__main__.ParseOptionFile(
+        cmakelint.__main__.parse_option_file(
             """
                 quiet
                 """.split("\n"),
@@ -376,7 +376,7 @@ def testParseOptionsFile():
         assert cmakelint.__main__._lint_state.quiet
 
         cmakelint.__main__._lint_state.quiet = True
-        cmakelint.__main__.ParseOptionFile(
+        cmakelint.__main__.parse_option_file(
             """
                 # quiet
                 """.split("\n"),

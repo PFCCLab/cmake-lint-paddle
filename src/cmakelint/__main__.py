@@ -90,7 +90,7 @@ _ERROR_CATEGORIES = """\
 _DEFAULT_FILENAME = "CMakeLists.txt"
 
 
-def DefaultRC():
+def default_rc():
     """
     Check current working directory and XDG_CONFIG_DIR before ~/.cmakelintrc
     """
@@ -106,7 +106,7 @@ def DefaultRC():
     return os.path.join(os.path.expanduser("~"), ".cmakelintrc")
 
 
-_DEFAULT_CMAKELINTRC = DefaultRC()
+_DEFAULT_CMAKELINTRC = default_rc()
 
 
 class _CMakeLintState:
@@ -119,7 +119,7 @@ class _CMakeLintState:
         self.allowed_categories = _ERROR_CATEGORIES.split()
         self.quiet = False
 
-    def SetFilters(self, filters):
+    def set_filters(self, filters):
         if not filters:
             return
         assert isinstance(self.filters, list)
@@ -140,13 +140,13 @@ class _CMakeLintState:
             else:
                 raise ValueError("Filter should start with - or +")
 
-    def SetSpaces(self, spaces):
+    def set_spaces(self, spaces):
         self.spaces = int(spaces.strip())
 
-    def SetQuiet(self, quiet):
+    def set_quiet(self, quiet):
         self.quiet = quiet
 
-    def SetLineLength(self, linelength):
+    def set_line_length(self, linelength):
         self.linelength = int(linelength)
 
     def reset(self):
@@ -165,17 +165,17 @@ class _CMakePackageState:
         self.have_included_stdargs = False
         self.have_used_stdargs = False
 
-    def Check(self, filename, linenumber, clean_lines, errors):
+    def check(self, filename, linenumber, clean_lines, errors):
         pass
 
-    def _GetExpected(self, filename):
+    def _get_expected(self, filename):
         package = os.path.basename(filename)
         package = re.sub(r"^Find(.*)\.cmake", lambda m: m.group(1), package)
         return package.upper()
 
-    def Done(self, filename, errors):
+    def done(self, filename, errors):
         try:
-            if not IsFindPackage(filename):
+            if not is_find_package(filename):
                 return
             if self.have_included_stdargs and self.have_used_stdargs:
                 return
@@ -187,8 +187,8 @@ class _CMakePackageState:
             self.have_used_stdargs = False
             self.have_included_stdargs = False
 
-    def HaveUsedStandardArgs(self, filename, linenumber, var, errors):
-        expected = self._GetExpected(filename)
+    def have_used_standard_args(self, filename, linenumber, var, errors):
+        expected = self._get_expected(filename)
         self.have_used_stdargs = True
         if expected != var:
             errors(
@@ -198,11 +198,11 @@ class _CMakePackageState:
                 "Weird variable passed to std args, should be " + expected + " not " + var,
             )
 
-    def HaveIncluded(self, var):
+    def have_included(self, var):
         if var == "FindPackageHandleStandardArgs":
             self.have_included_stdargs = True
 
-    def Set(self, var):
+    def set(self, var):
         self.sets.append(var)
 
 
@@ -210,7 +210,7 @@ _lint_state = _CMakeLintState()
 _package_state = _CMakePackageState()
 
 
-def CleanComments(line, quote=False):
+def clean_comments(line, quote=False):
     """
     quote means 'was in a quote starting this line' so that
     quoted lines can be eaten/removed.
@@ -249,14 +249,14 @@ class CleansedLines:
         self.lines = []
         quote = False
         for line in lines:
-            cleaned, quote = CleanComments(line, quote)
+            cleaned, quote = clean_comments(line, quote)
             self.lines.append(cleaned)
 
-    def LineNumbers(self):
+    def line_numbers(self):
         return range(0, len(self.lines))
 
 
-def ShouldPrintError(category):
+def should_print_error(category):
     should_print = True
     for f in _lint_state.filters:
         if f.startswith("-") and category.startswith(f[1:]):
@@ -266,13 +266,13 @@ def ShouldPrintError(category):
     return should_print
 
 
-def Error(filename, linenumber, category, message):
-    if ShouldPrintError(category):
+def error(filename, linenumber, category, message):
+    if should_print_error(category):
         _lint_state.errors += 1
-        print("%s:%d: %s [%s]" % (filename, linenumber, message, category))
+        print(f"{filename}:{linenumber}: {message} [{category}]")
 
 
-def CheckLineLength(filename, linenumber, clean_lines, errors):
+def check_line_length(filename, linenumber, clean_lines, errors):
     """
     Check for lines longer than the recommended length
     """
@@ -283,63 +283,63 @@ def CheckLineLength(filename, linenumber, clean_lines, errors):
         )
 
 
-def ContainsCommand(line):
+def contains_command(line):
     return _RE_COMMAND.match(line)
 
 
-def GetCommand(line):
+def get_command(line):
     match = _RE_COMMAND.match(line)
     if match:
         return match.group(1)
     return ""
 
 
-def IsCommandMixedCase(command):
+def is_command_mixed_case(command):
     lower = command.lower()
     upper = command.upper()
     return not (command == lower or command == upper)
 
 
-def IsCommandUpperCase(command):
+def is_command_upper_case(command):
     upper = command.upper()
     return command == upper
 
 
-def CheckUpperLowerCase(filename, linenumber, clean_lines, errors):
+def check_upper_lower_case(filename, linenumber, clean_lines, errors):
     """
     Check that commands are either lower case or upper case, but not both
     """
     line = clean_lines.lines[linenumber]
-    if ContainsCommand(line):
-        command = GetCommand(line)
-        if IsCommandMixedCase(command):
+    if contains_command(line):
+        command = get_command(line)
+        if is_command_mixed_case(command):
             return errors(filename, linenumber, "readability/wonkycase", "Do not use mixed case commands")
         if clean_lines.have_seen_uppercase is None:
-            clean_lines.have_seen_uppercase = IsCommandUpperCase(command)
+            clean_lines.have_seen_uppercase = is_command_upper_case(command)
         else:
-            is_upper = IsCommandUpperCase(command)
+            is_upper = is_command_upper_case(command)
             if is_upper != clean_lines.have_seen_uppercase:
                 return errors(filename, linenumber, "readability/mixedcase", "Do not mix upper and lower case commands")
 
 
-def GetInitialSpaces(line):
+def get_initial_spaces(line):
     initial_spaces = 0
     while initial_spaces < len(line) and line[initial_spaces] == " ":
         initial_spaces += 1
     return initial_spaces
 
 
-def CheckCommandSpaces(filename, linenumber, clean_lines, errors):
+def check_command_spaces(filename, linenumber, clean_lines, errors):
     """
     No extra spaces between command and parenthesis
     """
     line = clean_lines.lines[linenumber]
-    match = ContainsCommand(line)
+    match = contains_command(line)
     if match and len(match.group(2)):
         errors(filename, linenumber, "whitespace/extra", "Extra spaces between '%s' and its ()" % (match.group(1)))
     if match:
         spaces_after_open = len(_RE_COMMAND_START_SPACES.match(line).group(1))
-        initial_spaces = GetInitialSpaces(line)
+        initial_spaces = get_initial_spaces(line)
         initial_linenumber = linenumber
         end = None
         while True:
@@ -354,7 +354,7 @@ def CheckCommandSpaces(filename, linenumber, clean_lines, errors):
             errors(filename, initial_linenumber, "syntax", "Unable to find the end of this command")
         if end:
             spaces_before_end = len(end.group(1))
-            initial_spaces = GetInitialSpaces(line)
+            initial_spaces = get_initial_spaces(line)
             if initial_linenumber != linenumber and spaces_before_end >= initial_spaces:
                 spaces_before_end -= initial_spaces
 
@@ -364,7 +364,7 @@ def CheckCommandSpaces(filename, linenumber, clean_lines, errors):
                 )
 
 
-def CheckRepeatLogic(filename, linenumber, clean_lines, errors):
+def check_repeat_logic(filename, linenumber, clean_lines, errors):
     """
     Check for logic inside else, endif etc
     """
@@ -382,23 +382,23 @@ def CheckRepeatLogic(filename, linenumber, clean_lines, errors):
             break
 
 
-def CheckIndent(filename, linenumber, clean_lines, errors):
+def check_indent(filename, linenumber, clean_lines, errors):
     line = clean_lines.raw_lines[linenumber]
-    initial_spaces = GetInitialSpaces(line)
+    initial_spaces = get_initial_spaces(line)
     remainder = initial_spaces % _lint_state.spaces
     if remainder != 0:
         errors(filename, linenumber, "whitespace/indent", "Weird indentation; use %d spaces" % (_lint_state.spaces))
 
 
-def CheckStyle(filename, linenumber, clean_lines, errors):
+def check_style(filename, linenumber, clean_lines, errors):
     """
     Check style issues. These are:
     No extra spaces between command and parenthesis
     Matching spaces between parenthesis and arguments
     No repeated logic in else(), endif(), endmacro()
     """
-    CheckIndent(filename, linenumber, clean_lines, errors)
-    CheckCommandSpaces(filename, linenumber, clean_lines, errors)
+    check_indent(filename, linenumber, clean_lines, errors)
+    check_command_spaces(filename, linenumber, clean_lines, errors)
     line = clean_lines.raw_lines[linenumber]
     if line.find("\t") != -1:
         errors(filename, linenumber, "whitespace/tabs", "Tab found; please use spaces")
@@ -406,10 +406,10 @@ def CheckStyle(filename, linenumber, clean_lines, errors):
     if line and line[-1].isspace():
         errors(filename, linenumber, "whitespace/eol", "Line ends in whitespace")
 
-    CheckRepeatLogic(filename, linenumber, clean_lines, errors)
+    check_repeat_logic(filename, linenumber, clean_lines, errors)
 
 
-def CheckFileName(filename, errors):
+def check_file_name(filename, errors):
     name_match = re.match(r"Find(.*)\.cmake", os.path.basename(filename))
     if name_match:
         package = name_match.group(1)
@@ -425,13 +425,13 @@ def CheckFileName(filename, errors):
             errors(filename, 0, "convention/filename", "File should be called CMakeLists.txt")
 
 
-def IsFindPackage(filename):
+def is_find_package(filename):
     return os.path.basename(filename).startswith("Find") and filename.endswith(".cmake")
 
 
-def GetCommandArgument(linenumber, clean_lines):
+def get_command_argument(linenumber, clean_lines):
     line = clean_lines.lines[linenumber]
-    skip = GetCommand(line)
+    skip = get_command(line)
     while True:
         line = clean_lines.lines[linenumber]
         m = _RE_COMMAND_ARG.finditer(line)
@@ -443,52 +443,52 @@ def GetCommandArgument(linenumber, clean_lines):
     return ""
 
 
-def CheckFindPackage(filename, linenumber, clean_lines, errors):
-    cmd = GetCommand(clean_lines.lines[linenumber])
+def check_find_package(filename, linenumber, clean_lines, errors):
+    cmd = get_command(clean_lines.lines[linenumber])
     if cmd:
         if cmd.lower() == "include":
-            var_name = GetCommandArgument(linenumber, clean_lines)
-            _package_state.HaveIncluded(var_name)
+            var_name = get_command_argument(linenumber, clean_lines)
+            _package_state.have_included(var_name)
         elif cmd.lower() == "find_package_handle_standard_args":
-            var_name = GetCommandArgument(linenumber, clean_lines)
-            _package_state.HaveUsedStandardArgs(filename, linenumber, var_name, errors)
+            var_name = get_command_argument(linenumber, clean_lines)
+            _package_state.have_used_standard_args(filename, linenumber, var_name, errors)
 
 
-def ProcessLine(filename, linenumber, clean_lines, errors):
+def process_line(filename, linenumber, clean_lines, errors):
     """
     Arguments:
-      filename    the name of the file
-      linenumber  the line number index
-      clean_lines CleansedLines instance
-      errors      the error handling function
+        filename    the name of the file
+        linenumber  the line number index
+        clean_lines CleansedLines instance
+        errors      the error handling function
     """
-    CheckLintPragma(filename, linenumber, clean_lines.raw_lines[linenumber], errors)
-    CheckLineLength(filename, linenumber, clean_lines, errors)
-    CheckUpperLowerCase(filename, linenumber, clean_lines, errors)
-    CheckStyle(filename, linenumber, clean_lines, errors)
-    if IsFindPackage(filename):
-        CheckFindPackage(filename, linenumber, clean_lines, errors)
+    check_lint_pragma(filename, linenumber, clean_lines.raw_lines[linenumber], errors)
+    check_line_length(filename, linenumber, clean_lines, errors)
+    check_upper_lower_case(filename, linenumber, clean_lines, errors)
+    check_style(filename, linenumber, clean_lines, errors)
+    if is_find_package(filename):
+        check_find_package(filename, linenumber, clean_lines, errors)
 
 
-def IsValidFile(filename):
+def is_valid_file(filename):
     return filename.endswith(".cmake") or os.path.basename(filename).lower() == "cmakelists.txt"
 
 
-def ProcessFile(filename):
+def process_file(filename):
     # Store and then restore the filters to prevent pragmas in the file from persisting.
     original_filters = list(_lint_state.filters)
     try:
-        return _ProcessFile(filename)
+        return _process_file(filename)
     finally:
         _lint_state.filters = original_filters
 
 
-def CheckLintPragma(filename, linenumber, line, errors=None):
+def check_lint_pragma(filename, linenumber, line, errors=None):
     # Check this line to see if it is a lint_cmake pragma
     linter_pragma_start = "# lint_cmake: "
     if line.startswith(linter_pragma_start):
         try:
-            _lint_state.SetFilters(line[len(linter_pragma_start) :])
+            _lint_state.set_filters(line[len(linter_pragma_start) :])
         except ValueError as ex:
             if errors:
                 errors(filename, linenumber, "syntax", str(ex))
@@ -496,10 +496,10 @@ def CheckLintPragma(filename, linenumber, line, errors=None):
             print(f"Exception occurred while processing '{filename}:{linenumber}':")
 
 
-def _ProcessFile(filename):
+def _process_file(filename):
     lines = ["# Lines start at 1"]
     have_cr = False
-    if not IsValidFile(filename):
+    if not is_valid_file(filename):
         print("Ignoring file: " + filename)
         return
     global _package_state
@@ -510,36 +510,36 @@ def _ProcessFile(filename):
             have_cr = True
             line = line.rstrip("\r")
         lines.append(line)
-        CheckLintPragma(filename, len(lines) - 1, line)
+        check_lint_pragma(filename, len(lines) - 1, line)
     lines.append("# Lines end here")
     # Check file name after reading lines incase of a # lint_cmake: pragma
-    CheckFileName(filename, Error)
+    check_file_name(filename, error)
     if have_cr and os.linesep != "\r\n":
-        Error(filename, 0, "whitespace/newline", "Unexpected carriage return found; " "better to use only \\n")
+        error(filename, 0, "whitespace/newline", "Unexpected carriage return found; " "better to use only \\n")
     clean_lines = CleansedLines(lines)
-    for line in clean_lines.LineNumbers():
-        ProcessLine(filename, line, clean_lines, Error)
-    _package_state.Done(filename, Error)
+    for line in clean_lines.line_numbers():
+        process_line(filename, line, clean_lines, error)
+    _package_state.done(filename, error)
 
 
-def PrintVersion():
+def print_version():
     sys.stderr.write("cmakelint %s\n" % cmakelint.__version__.VERSION)
     sys.exit(0)
 
 
-def PrintUsage(message):
+def print_usage(message):
     sys.stderr.write(_USAGE)
     if message:
         sys.stderr.write("FATAL ERROR: %s\n" % message)
     sys.exit(32)
 
 
-def PrintCategories():
+def print_categories():
     sys.stderr.write(_ERROR_CATEGORIES)
     sys.exit(0)
 
 
-def ParseOptionFile(contents, ignore_space):
+def parse_option_file(contents, ignore_space):
     filters = None
     spaces = None
     linelength = None
@@ -552,79 +552,79 @@ def ParseOptionFile(contents, ignore_space):
         if line.startswith("spaces="):
             spaces = line.replace("spaces=", "")
         if line == "quiet":
-            _lint_state.SetQuiet(True)
+            _lint_state.set_quiet(True)
         if line.startswith("linelength="):
             linelength = line.replace("linelength=", "")
-    _lint_state.SetFilters(filters)
+    _lint_state.set_filters(filters)
     if spaces and not ignore_space:
-        _lint_state.SetSpaces(spaces)
+        _lint_state.set_spaces(spaces)
     if linelength is not None:
-        _lint_state.SetLineLength(linelength)
+        _lint_state.set_line_length(linelength)
 
 
-def OpenTextFile(filename):
+def open_text_file(filename):
     return open(filename, newline=None)
 
 
-def ParseArgs(argv):
+def parse_args(argv):
     try:
         (opts, filenames) = getopt.getopt(
             argv, "", ["help", "filter=", "config=", "spaces=", "linelength=", "quiet", "version"]
         )
     except getopt.GetoptError:
-        PrintUsage("Invalid Arguments")
+        print_usage("Invalid Arguments")
     filters = ""
     _lint_state.config = _DEFAULT_CMAKELINTRC
     ignore_space = False
     for opt, val in opts:
         if opt == "--version":
-            PrintVersion()
+            print_version()
         elif opt == "--help":
-            PrintUsage(None)
+            print_usage(None)
         elif opt == "--filter":
             filters = val
             if not filters:
-                PrintCategories()
+                print_categories()
         elif opt == "--config":
             _lint_state.config = val
             if _lint_state.config == "None":
                 _lint_state.config = None
         elif opt == "--spaces":
             try:
-                _lint_state.SetSpaces(val)
+                _lint_state.set_spaces(val)
                 ignore_space = True
             except:  # noqa: E722
-                PrintUsage("spaces expects an integer value")
+                print_usage("spaces expects an integer value")
         elif opt == "--quiet":
             _lint_state.quiet = True
         elif opt == "--linelength":
             try:
-                _lint_state.SetLineLength(val)
+                _lint_state.set_line_length(val)
             except:  # noqa: E722
-                PrintUsage("line length expects an integer value")
+                print_usage("line length expects an integer value")
     try:
         if _lint_state.config:
             try:
-                ParseOptionFile(OpenTextFile(_lint_state.config).readlines(), ignore_space)
+                parse_option_file(open_text_file(_lint_state.config).readlines(), ignore_space)
             except OSError:
                 pass
-        _lint_state.SetFilters(filters)
+        _lint_state.set_filters(filters)
     except ValueError as ex:
-        PrintUsage(str(ex))
+        print_usage(str(ex))
 
     if not filenames:
         if os.path.isfile(_DEFAULT_FILENAME):
             filenames = [_DEFAULT_FILENAME]
         else:
-            PrintUsage("No files were specified!")
+            print_usage("No files were specified!")
     return filenames
 
 
 def main():
-    files = ParseArgs(sys.argv[1:])
+    files = parse_args(sys.argv[1:])
 
     for filename in files:
-        ProcessFile(filename)
+        process_file(filename)
     if _lint_state.errors > 0 or not _lint_state.quiet:
         sys.stderr.write("Total Errors: %d\n" % _lint_state.errors)
     if _lint_state.errors > 0:
