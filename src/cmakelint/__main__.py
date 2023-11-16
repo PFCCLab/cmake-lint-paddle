@@ -11,16 +11,12 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 """
-from __future__ import print_function
-import sys
-import re
-import os
 import getopt
-import cmakelint.__version__
+import os
+import re
+import sys
 
-if sys.version_info < (3,):
-    # xrange slightly faster than range on python2
-    range = xrange
+import cmakelint.__version__
 
 _RE_COMMAND = re.compile(r'^\s*(\w+)(\s*)\(', re.VERBOSE)
 _RE_COMMAND_START_SPACES = re.compile(r'^\s*\w+\s*\((\s*)', re.VERBOSE)
@@ -106,7 +102,7 @@ def DefaultRC():
 
 _DEFAULT_CMAKELINTRC = DefaultRC()
 
-class _CMakeLintState(object):
+class _CMakeLintState:
     def __init__(self):
         self.filters = []
         self.config = 0
@@ -146,7 +142,7 @@ class _CMakeLintState(object):
     def SetLineLength(self, linelength):
         self.linelength = int(linelength)
 
-class _CMakePackageState(object):
+class _CMakePackageState:
     def __init__(self):
         self.sets = []
         self.have_included_stdargs = False
@@ -234,7 +230,7 @@ def CleanComments(line, quote=False):
 
     return ''.join(prior).rstrip(), quote
 
-class CleansedLines(object):
+class CleansedLines:
     def __init__(self, lines):
         self.have_seen_uppercase = None
         self.raw_lines = lines
@@ -367,8 +363,8 @@ def CheckRepeatLogic(filename, linenumber, clean_lines, errors):
             m = _RE_LOGIC_CHECK.search(line)
             if m:
                 errors(filename, linenumber, 'readability/logic',
-                        'Expression repeated inside %s; '
-                        'better to use only %s()'%(cmd, m.group(1)))
+                        f'Expression repeated inside {cmd}; '
+                        +f'better to use only {m.group(1)}()')
             break
 
 def CheckIndent(filename, linenumber, clean_lines, errors):
@@ -471,9 +467,9 @@ def CheckLintPragma(filename, linenumber, line, errors=None):
         except ValueError as ex:
             if errors:
                 errors(filename, linenumber, 'syntax', str(ex))
-        except:
-            print("Exception occurred while processing '{0}:{1}':"
-                  .format(filename, linenumber))
+        except: # noqa: E722
+            print(f"Exception occurred while processing '{filename}:{linenumber}':"
+                  )
 
 def _ProcessFile(filename):
     lines = ['# Lines start at 1']
@@ -483,13 +479,13 @@ def _ProcessFile(filename):
         return
     global _package_state
     _package_state = _CMakePackageState()
-    for l in open(filename).readlines():
-        l = l.rstrip('\n')
-        if l.endswith('\r'):
+    for line in open(filename).readlines():
+        line = line.rstrip('\n')
+        if line.endswith('\r'):
             have_cr = True
-            l = l.rstrip('\r')
-        lines.append(l)
-        CheckLintPragma(filename, len(lines) - 1, l)
+            line = line.rstrip('\r')
+        lines.append(line)
+        CheckLintPragma(filename, len(lines) - 1, line)
     lines.append('# Lines end here')
     # Check file name after reading lines incase of a # lint_cmake: pragma
     CheckFileName(filename, Error)
@@ -538,13 +534,8 @@ def ParseOptionFile(contents, ignore_space):
         _lint_state.SetLineLength(linelength)
 
 
-# See https://stackoverflow.com/a/30299145 - fixes deprecation warning in py 3.4+
-if sys.version_info[0] == 2:
-    def OpenTextFile(filename):
-        return open(filename, 'rU')
-else:
-    def OpenTextFile(filename):
-        return open(filename, 'r', newline=None)
+def OpenTextFile(filename):
+    return open(filename, newline=None)
 
 def ParseArgs(argv):
     try:
@@ -573,20 +564,20 @@ def ParseArgs(argv):
             try:
                 _lint_state.SetSpaces(val)
                 ignore_space = True
-            except:
+            except: # noqa: E722
                 PrintUsage('spaces expects an integer value')
         elif opt == '--quiet':
             _lint_state.quiet = True
         elif opt == '--linelength':
             try:
                 _lint_state.SetLineLength(val)
-            except:
+            except: # noqa: E722
                 PrintUsage('line length expects an integer value')
     try:
         if _lint_state.config:
             try:
                 ParseOptionFile(OpenTextFile(_lint_state.config).readlines(), ignore_space)
-            except IOError:
+            except OSError:
                 pass
         _lint_state.SetFilters(filters)
     except ValueError as ex:

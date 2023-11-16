@@ -44,7 +44,7 @@ class UsageTest(unittest.TestCase):
         self.assertTrue(err.startswith(b'\nSyntax: cmakelint.py'), err)
 
 
-class TemporaryFolderClassSetup(object):
+class TemporaryFolderClassSetup:
     """
     Regression tests: The test starts a filetreewalker scanning for files name *.def
     Such files are expected to have as first line the argument
@@ -119,7 +119,7 @@ class TemporaryFolderClassSetup(object):
                 out.decode('utf8').split('\n')))
             self.assertEqual(expectedOut, out.decode('utf8').split('\n'))
         except AssertionError as e:
-            e.args += ('Failed check in %s for command: %s' % (cwd, cmd),)
+            e.args += (f'Failed check in {cwd} for command: {cmd}',)
             raise e
 
 

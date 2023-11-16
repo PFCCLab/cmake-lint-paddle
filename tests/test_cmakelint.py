@@ -15,22 +15,22 @@ the License.
 
 from __future__ import annotations
 
-
 import contextlib
 import os
 import sys
 import unittest
-
-import cmakelint.__version__
-import cmakelint.__main__
 from unittest import mock
+
+import cmakelint.__main__
+import cmakelint.__version__
+
 
 # stderr suppression from https://stackoverflow.com/a/1810086
 @contextlib.contextmanager
 def nostderr():
     savestderr = sys.stderr
 
-    class Devnull(object):
+    class Devnull:
         def write(self, _): pass
         def flush(self): pass
     sys.stderr = Devnull()
@@ -40,7 +40,7 @@ def nostderr():
         sys.stderr = savestderr
 
 
-class ErrorCollector(object):
+class ErrorCollector:
     def __init__(self):
         self._errors = []
 
