@@ -16,16 +16,12 @@ the License.
 
 from __future__ import annotations
 
-from .utils import check_all_in_folder
+from .utils import run_command
 
 
-def test_blender_samples():
-    check_all_in_folder("samples/blender", 2)
+def test_llvm_check(snapshot):
+    assert run_command("samples/llvm", ["--filter=-linelength,-readability/mixedcase", "CMakeLists.txt"]) == snapshot
 
 
-def test_opencv_samples():
-    check_all_in_folder("samples/opencv", 1)
-
-
-def test_llvm_samples():
-    check_all_in_folder("samples/llvm", 2)
+def test_llvm_checknofilename(snapshot):
+    assert run_command("samples/llvm", ["--filter=-linelength,-readability/mixedcase"]) == snapshot

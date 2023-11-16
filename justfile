@@ -15,6 +15,9 @@ test:
   {{PYTHON}} -m pytest
   just clean
 
+snapshot:
+  {{PYTHON}} -m pytest --snapshot-update
+
 build:
   {{PYTHON}} -m build
 

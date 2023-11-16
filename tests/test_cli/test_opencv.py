@@ -16,12 +16,8 @@ the License.
 
 from __future__ import annotations
 
-from ..conftest import TEST_DIR
 from .utils import run_command
 
-CMAKELISTS = "CMakeLists.txt"
 
-
-def test_invocation(snapshot):
-    (TEST_DIR / CMAKELISTS).touch()
-    assert run_command("", [CMAKELISTS]) == snapshot
+def test_opencv_check(snapshot):
+    assert run_command("samples/opencv", ["--filter=-linelength,-readability/mixedcase", "CMakeLists.txt"]) == snapshot

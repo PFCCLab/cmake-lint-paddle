@@ -16,7 +16,6 @@ the License.
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 
@@ -48,44 +47,14 @@ def run_shell_command(cmd, cwd="."):
     return (proc.returncode, out, err)
 
 
-def check_all_in_folder(folder_name, expected_defs):
-    count = 0
-    for dirpath, _, fnames in os.walk(folder_name):
-        for f in fnames:
-            if f.endswith(".def"):
-                count += 1
-                _check_def(os.path.join(dirpath, f))
-    assert count, expected_defs
-
-
-def _check_def(path):
-    """runs command and compares to expected output from def file"""
-    # TODO: Use pytest snapshot library to fix the output
-    # self.maxDiff = None # to see full diff
-    with open(path, "rb") as filehandle:
-        datalines = filehandle.readlines()
-        stdoutLines = int(datalines[2])
-        _run_and_check(
-            rel_cwd=os.path.dirname(path),
-            args=[datalines[0].decode("utf8").strip()],
-            expected_status=int(datalines[1]),
-            expected_out=[line.decode("utf8").strip() for line in datalines[3 : 3 + stdoutLines]],
-            expected_err=[line.decode("utf8").strip() for line in datalines[3 + stdoutLines :]],
-        )
-
-
-def _run_and_check(rel_cwd, args, expected_status, expected_out, expected_err):
+def run_command(rel_cwd, args):
     cmd = with_base_cmd(args)
     cwd = str(TEST_DIR / rel_cwd)
     # command to reproduce
     print("\ncd " + cwd + " && " + cmd + " 2> <filename>")
-    (status, out, err) = run_shell_command(cmd, cwd)
-    try:
-        assert status == expected_status, "bad command status %s" % status
-        assert len(err.decode("utf8").split("\n")) == len(expected_err)
-        assert err.decode("utf8").split("\n") == expected_err
-        assert len(out.decode("utf8").split("\n")) == len(expected_out)
-        assert out.decode("utf8").split("\n") == expected_out
-    except AssertionError as e:
-        e.args += (f"Failed check in {cwd} for command: {cmd}",)
-        raise e
+    status, stdout, stderr = run_shell_command(cmd, cwd)
+    return {
+        "status": status,
+        "stdout": stdout.decode("utf8").split("\n"),
+        "stderr": stderr.decode("utf8").split("\n"),
+    }

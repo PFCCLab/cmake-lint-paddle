@@ -16,12 +16,15 @@ the License.
 
 from __future__ import annotations
 
-from ..conftest import TEST_DIR
 from .utils import run_command
 
-CMAKELISTS = "CMakeLists.txt"
+
+def test_blender_check(snapshot):
+    assert run_command("samples/blender", ["src/CMakeLists.txt"]) == snapshot
 
 
-def test_invocation(snapshot):
-    (TEST_DIR / CMAKELISTS).touch()
-    assert run_command("", [CMAKELISTS]) == snapshot
+def test_blender_nolinelen(snapshot):
+    assert (
+        run_command("samples/blender", ["--filter=-linelength,-readability/mixedcase", "src/CMakeLists.txt"])
+        == snapshot
+    )
