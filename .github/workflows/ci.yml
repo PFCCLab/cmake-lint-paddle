@@ -1,32 +1,39 @@
-name: Test
+name: Unit Test
 
 on:
-  - push
+  push:
+    branches: [main]
+  pull_request:
+  merge_group:
+  workflow_dispatch:
 
 jobs:
-  build-test:
+  test-crwaler:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', 'pypy-3.7']
-
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    name: unittest (api) - Python ${{ matrix.python-version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/checkout@v4
+
+      - name: Install python
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
-          cache: 'pip'
-          cache-dependency-path: '**/dev-requirements'
-      - name: Install dependencies
+
+      - name: Install just
+        uses: extractions/setup-just@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Initialize venv and install packages
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools
-          python -m pip install -e .[dev]
-          python -m pip install tox tox-gh-actions
-      - name: Test with tox
-        run: tox
+          just create-venv
+          just install
+
+      - name: Run Unittest
+        run: |
+          just test

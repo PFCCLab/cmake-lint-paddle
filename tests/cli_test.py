@@ -7,9 +7,12 @@ import sys
 import tempfile
 import unittest
 
-BASE_CMD = sys.executable + ' ' + os.path.abspath('./bin/cmakelint ')
+BASE_CMD = f"{sys.executable} -m cmakelint"
 
 CMAKELISTS = "CMakeLists.txt"
+
+def with_base_cmd(args: list[str]):
+    return f"{BASE_CMD} {' '.join(args)}"
 
 
 def RunShellCommand(cmd, cwd='.'):
@@ -35,7 +38,7 @@ def RunShellCommand(cmd, cwd='.'):
 class UsageTest(unittest.TestCase):
 
     def testHelp(self):
-        (status, out, err) = RunShellCommand(BASE_CMD + ' --help')
+        (status, out, err) = RunShellCommand(with_base_cmd(['--help']))
         self.assertEqual(32, status)
         self.assertEqual(b'', out)
         self.assertTrue(err.startswith(b'\nSyntax: cmakelint.py'), err)
@@ -89,26 +92,24 @@ class TemporaryFolderClassSetup(object):
 
     def _checkDef(self, path):
         """runs command and compares to expected output from def file"""
+        # TODO: Use pytest snapshot library to fix the output
         # self.maxDiff = None # to see full diff
         with open(path, 'rb') as filehandle:
             datalines = filehandle.readlines()
             stdoutLines = int(datalines[2])
             self._runAndCheck(rel_cwd=os.path.dirname(path),
-                              args=datalines[0].decode('utf8').strip(),
+                              args=[datalines[0].decode('utf8').strip()],
                               expectedStatus=int(datalines[1]),
-                              expectedOut=[line.decode('utf8').strip(
-                              ) for line in datalines[3:3 + stdoutLines]],
+                              expectedOut=[line.decode('utf8').strip() for line in datalines[3: 3 + stdoutLines]],
                               expectedErr=[line.decode('utf8').strip() for line in datalines[3 + stdoutLines:]])
 
     def _runAndCheck(self, rel_cwd, args, expectedStatus, expectedOut, expectedErr):
-        cmd = BASE_CMD + args
+        cmd = with_base_cmd(args)
         cwd = os.path.join(self._root, rel_cwd)
         # command to reproduce
         print("\ncd " + cwd + " && " + cmd + " 2> <filename>")
         (status, out, err) = RunShellCommand(cmd, cwd)
         try:
-            # print(out.decode('utf8'))
-            # print(err.decode('utf8'))
             self.assertEqual(expectedStatus, status,
                              'bad command status %s' % status)
             self.assertEqual(len(expectedErr), len(
@@ -143,7 +144,7 @@ class SimpleCMakeListsTxt(TemporaryFolderClassSetup, unittest.TestCase):
             pass
 
     def test_invocation(self):
-        self._runAndCheck('', CMAKELISTS, 0, [""], ["Total Errors: 0", ""])
+        self._runAndCheck('', [CMAKELISTS], 0, [""], ["Total Errors: 0", ""])
 
 
 if __name__ == '__main__':

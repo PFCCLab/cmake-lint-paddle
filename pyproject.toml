@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cmake-lint-paddle"
+description = "A fork of cmake-lint for PaddlePaddle"
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [
+  { name = "Richard Quirk", email = "richard.quirk@gmail.com" },
+  { name = "Nyakku Shigure", email = "sigure.qaq@gmail.com" },
+]
+keywords = ["cmake", "lint"]
+license = { text = "Apache 2.0" }
+classifiers = [
+  "Environment :: Console",
+  "Operating System :: OS Independent",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = []
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.4.0",
+  "ruff==0.1.5",
+  "pytest-rerunfailures>=11.0",
+  "build",
+] # fmt: skip
+
+[project.urls]
+Homepage = "https://github.com/PFCCLab/cmake-lint-paddle"
+Documentation = "https://github.com/PFCCLab/cmake-lint-paddle"
+
+[project.scripts]
+cmakelint = "cmakelint.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "cmakelint.__version__.VERSION" }
+
+[tool.ruff]
+line-length = 120
+target-version = "py37"
+
+[tool.ruff.lint]
+select = [
+  # Pyflakes
+  "F",
+  # Pycodestyle
+  "E",
+  "W",
+  # Isort
+  "I",
+  # Pyupgrade
+  "UP",
+  # Flake8-pyi
+  "PYI",
+  # Yesqa
+  "RUF100",
+]
+ignore = [
+  "E501", # line too long, duplicate with black
+  "E731", # lambda sometimes is more readable
+  "F401", # imported but unused, duplicate with pyright
+  "F841", # local variable is assigned to but never used, duplicate with pyright
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cmakelint"]
