@@ -15,6 +15,7 @@ the License.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from unittest import mock
 
@@ -22,6 +23,7 @@ import pytest
 
 import cmakelint.__main__
 import cmakelint.__version__
+from cmakelint.__main__ import _DEFAULT_FILENAME
 
 from .utils import (
     do_test_check_file_name,
@@ -263,12 +265,9 @@ def test_indent():
 
 
 def test_parse_args():
-    old_usage = cmakelint.__main__._USAGE
     old_version = cmakelint.__version__.VERSION
     old_cats = cmakelint.__main__._ERROR_CATEGORIES
-    old_spaces = cmakelint.__main__._lint_state.spaces
     try:
-        cmakelint.__main__._USAGE = ""
         cmakelint.__main__._ERROR_CATEGORIES = ""
         cmakelint.__main__._VERSION = ""
         with nostderr():
@@ -302,30 +301,35 @@ def test_parse_args():
         cmakelint.__main__._lint_state.filters = []
         cmakelint.__main__.parse_args(["--config=./foo/bar", "foo.cmake"])
         assert cmakelint.__main__._lint_state.config == "./foo/bar"
+
         cmakelint.__main__.parse_args(["--config=None", "foo.cmake"])
         assert cmakelint.__main__._lint_state.config is None
+        cmakelint.__main__._lint_state.reset()
+
         cmakelint.__main__.parse_args(["foo.cmake"])
         assert cmakelint.__main__._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
-        config = {"return_value": True}
-        patcher = mock.patch("os.path.isfile", **config)
-        try:
-            patcher.start()
+
+        original_isfile = os.path.isfile
+
+        def patched_isfile(filename, *args, **kwargs):
+            if filename == _DEFAULT_FILENAME:
+                return True
+            return original_isfile(filename, *args, **kwargs)
+
+        patcher = mock.patch("os.path.isfile", patched_isfile)
+        with patcher:
             assert cmakelint.__main__.parse_args([]) == ["CMakeLists.txt"]
             assert cmakelint.__main__._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
-        finally:
-            patcher.stop()
+
     finally:
-        cmakelint.__main__._USAGE = old_usage
         cmakelint.__main__._ERROR_CATEGORIES = old_cats
         cmakelint.__main__._VERSION = old_version
         cmakelint.__main__._lint_state.reset()
 
 
 def testParseOptionsFile():
-    old_usage = cmakelint.__main__._USAGE
     old_cats = cmakelint.__main__._ERROR_CATEGORIES
     try:
-        cmakelint.__main__._USAGE = ""
         cmakelint.__main__._ERROR_CATEGORIES = ""
         cmakelint.__main__.parse_option_file(
             """
@@ -384,6 +388,5 @@ def testParseOptionsFile():
         )
         assert cmakelint.__main__._lint_state.quiet
     finally:
-        cmakelint.__main__._USAGE = old_usage
         cmakelint.__main__._ERROR_CATEGORIES = old_cats
         cmakelint.__main__._lint_state.reset()
