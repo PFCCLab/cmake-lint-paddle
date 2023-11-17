@@ -35,42 +35,7 @@ endif
 endmacro
 endwhile
 """.split()
-_USAGE = """
-Syntax: cmakelint.py [--version] [--config=file] [--filter=-x,+y] [--spaces=N]
-                     [--quiet] [--linelength=digits]
-        <file> [file] ...
-    filter=-x,+y,...
-      Specify a comma separated list of filters to apply
 
-    spaces=N
-      Indentation should be a multiple of N spaces
-
-    config=file
-      Use the given file for configuration. By default the file
-      $PWD/.cmakelintrc, ~/.config/cmakelintrc, $XDG_CONFIG_DIR/cmakelintrc or
-      ~/.cmakelintrc is used if it exists. Use the value "None" to use no
-      configuration file (./None for a file called literally None) Only the
-      option "filter=" is currently supported in this file.
-
-    quiet makes output quiet unless errors occurs
-      Mainly used by automation tools when parsing huge amount of files.
-      In those cases actual error might get lost in the pile of other stats
-      prints.
-
-      This argument is also handy for build system integration, so it's
-      possible to add automated lint target to a project and invoke it
-      via build system and have no pollution of terminals or IDE.
-
-    linelength=digits
-      This is the allowed line length for the project. The default value is
-      80 characters.
-
-      Examples:
-        --linelength=120
-
-    version
-      Show the version number and end
-"""
 _ERROR_CATEGORIES = """\
         convention/filename
         linelength
@@ -567,11 +532,41 @@ def parse_args(argv):
     parser = ArgumentParser("cmakelint", description="cmakelint")
     parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {cmakelint.__version__.VERSION}")
     parser.add_argument("files", nargs="*", help="files to lint")
-    parser.add_argument("--filter", default=None, metavar="-X,+Y", help="filter to apply")
-    parser.add_argument("--config", default=None, help="config file to use")
-    parser.add_argument("--spaces", type=int, default=None, help="spaces to use")
-    parser.add_argument("--linelength", type=int, default=None, help="line length to use")
-    parser.add_argument("--quiet", action="store_true", help="suppress output")
+    parser.add_argument(
+        "--filter", default=None, metavar="-X,+Y", help="Specify a comma separated list of filters to apply"
+    )
+    parser.add_argument(
+        "--config",
+        default=None,
+        help="""
+        Use the given file for configuration. By default the file
+        $PWD/.cmakelintrc, ~/.config/cmakelintrc, $XDG_CONFIG_DIR/cmakelintrc or
+        ~/.cmakelintrc is used if it exists. Use the value "None" to use no
+        configuration file (./None for a file called literally None) Only the
+        option "filter=" is currently supported in this file.
+        """,
+    )
+    parser.add_argument("--spaces", type=int, default=None, help="Indentation should be a multiple of N spaces")
+    parser.add_argument(
+        "--linelength",
+        type=int,
+        default=None,
+        help="This is the allowed line length for the project. The default value is 80 characters.",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="""
+        makes output quiet unless errors occurs
+        Mainly used by automation tools when parsing huge amount of files.
+        In those cases actual error might get lost in the pile of other stats
+        prints.
+
+        This argument is also handy for build system integration, so it's
+        possible to add automated lint target to a project and invoke it
+        via build system and have no pollution of terminals or IDE.
+        """,
+    )
 
     args = parser.parse_args(argv)
     ignore_space = args.spaces is not None
