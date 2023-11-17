@@ -265,11 +265,9 @@ def test_indent():
 
 
 def test_parse_args():
-    old_usage = cmakelint.__main__._USAGE
     old_version = cmakelint.__version__.VERSION
     old_cats = cmakelint.__main__._ERROR_CATEGORIES
     try:
-        cmakelint.__main__._USAGE = ""
         cmakelint.__main__._ERROR_CATEGORIES = ""
         cmakelint.__main__._VERSION = ""
         with nostderr():
@@ -303,9 +301,11 @@ def test_parse_args():
         cmakelint.__main__._lint_state.filters = []
         cmakelint.__main__.parse_args(["--config=./foo/bar", "foo.cmake"])
         assert cmakelint.__main__._lint_state.config == "./foo/bar"
+
         cmakelint.__main__.parse_args(["--config=None", "foo.cmake"])
         assert cmakelint.__main__._lint_state.config is None
         cmakelint.__main__._lint_state.reset()
+
         cmakelint.__main__.parse_args(["foo.cmake"])
         assert cmakelint.__main__._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
 
@@ -322,17 +322,14 @@ def test_parse_args():
             assert cmakelint.__main__._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
 
     finally:
-        cmakelint.__main__._USAGE = old_usage
         cmakelint.__main__._ERROR_CATEGORIES = old_cats
         cmakelint.__main__._VERSION = old_version
         cmakelint.__main__._lint_state.reset()
 
 
 def testParseOptionsFile():
-    old_usage = cmakelint.__main__._USAGE
     old_cats = cmakelint.__main__._ERROR_CATEGORIES
     try:
-        cmakelint.__main__._USAGE = ""
         cmakelint.__main__._ERROR_CATEGORIES = ""
         cmakelint.__main__.parse_option_file(
             """
@@ -391,6 +388,5 @@ def testParseOptionsFile():
         )
         assert cmakelint.__main__._lint_state.quiet
     finally:
-        cmakelint.__main__._USAGE = old_usage
         cmakelint.__main__._ERROR_CATEGORIES = old_cats
         cmakelint.__main__._lint_state.reset()
