@@ -23,7 +23,7 @@ import sys
 from cmakelint.__version__ import VERSION as CMAKELINT_VERSION
 from cmakelint.error_code import ERROR_CODE_WRONG_USAGE
 from cmakelint.rules import ERROR_CATEGORIES
-from cmakelint.state import _lint_state
+from cmakelint.state import LINT_STATE
 
 _DEFAULT_FILENAME = "CMakeLists.txt"
 
@@ -46,14 +46,14 @@ def parse_option_file(contents, ignore_space):
         if line.startswith("spaces="):
             spaces = line.replace("spaces=", "")
         if line == "quiet":
-            _lint_state.set_quiet(True)
+            LINT_STATE.set_quiet(True)
         if line.startswith("linelength="):
             linelength = line.replace("linelength=", "")
-    _lint_state.set_filters(filters)
+    LINT_STATE.set_filters(filters)
     if spaces and not ignore_space:
-        _lint_state.set_spaces(int(spaces.strip()))
+        LINT_STATE.set_spaces(int(spaces.strip()))
     if linelength is not None:
-        _lint_state.set_line_length(linelength)
+        LINT_STATE.set_line_length(linelength)
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -106,23 +106,23 @@ def parse_args(argv):
     ignore_space = args.spaces is not None
     if args.config is not None:
         if args.config == "None":
-            _lint_state.config = None
+            LINT_STATE.config = None
         elif args.config is not None:
-            _lint_state.config = args.config
+            LINT_STATE.config = args.config
     if args.linelength is not None:
-        _lint_state.set_line_length(args.linelength)
+        LINT_STATE.set_line_length(args.linelength)
     if args.spaces is not None:
-        _lint_state.set_spaces(args.spaces)
+        LINT_STATE.set_spaces(args.spaces)
     if args.filter is not None:
         if args.filter == "":
             print_categories()
-    _lint_state.set_quiet(args.quiet)
+    LINT_STATE.set_quiet(args.quiet)
 
     try:
-        if _lint_state.config and os.path.isfile(_lint_state.config):
-            with open(_lint_state.config) as f:
+        if LINT_STATE.config and os.path.isfile(LINT_STATE.config):
+            with open(LINT_STATE.config) as f:
                 parse_option_file(f.readlines(), ignore_space)
-        _lint_state.set_filters(args.filter)
+        LINT_STATE.set_filters(args.filter)
     except ValueError as e:
         parser.error(str(e))
 

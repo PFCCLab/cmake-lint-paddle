@@ -19,7 +19,7 @@ from __future__ import annotations
 import os
 import re
 
-from cmakelint.state import _CMakePackageState, _lint_state, _package_state, is_find_package
+from cmakelint.state import LINT_STATE, PACKAGE_STATE, _CMakePackageState, is_find_package
 
 _RE_COMMAND = re.compile(r"^\s*(\w+)(\s*)\(", re.VERBOSE)
 _RE_COMMAND_START_SPACES = re.compile(r"^\s*\w+\s*\((\s*)", re.VERBOSE)
@@ -84,7 +84,7 @@ class CleansedLines:
 
 def should_print_error(category):
     should_print = True
-    for f in _lint_state.filters:
+    for f in LINT_STATE.filters:
         if f.startswith("-") and category.startswith(f[1:]):
             should_print = False
         elif f.startswith("+") and category.startswith(f[1:]):
@@ -94,7 +94,7 @@ def should_print_error(category):
 
 def error(filename, linenumber, category, message):
     if should_print_error(category):
-        _lint_state.errors += 1
+        LINT_STATE.errors += 1
         print(f"{filename}:{linenumber}: {message} [{category}]")
 
 
@@ -103,9 +103,9 @@ def check_line_length(filename, linenumber, clean_lines, errors):
     Check for lines longer than the recommended length
     """
     line = clean_lines.raw_lines[linenumber]
-    if len(line) > _lint_state.linelength:
+    if len(line) > LINT_STATE.linelength:
         return errors(
-            filename, linenumber, "linelength", "Lines should be <= %d characters long" % (_lint_state.linelength)
+            filename, linenumber, "linelength", "Lines should be <= %d characters long" % (LINT_STATE.linelength)
         )
 
 
@@ -211,9 +211,9 @@ def check_repeat_logic(filename, linenumber, clean_lines, errors):
 def check_indent(filename, linenumber, clean_lines, errors):
     line = clean_lines.raw_lines[linenumber]
     initial_spaces = get_initial_spaces(line)
-    remainder = initial_spaces % _lint_state.spaces
+    remainder = initial_spaces % LINT_STATE.spaces
     if remainder != 0:
-        errors(filename, linenumber, "whitespace/indent", "Weird indentation; use %d spaces" % (_lint_state.spaces))
+        errors(filename, linenumber, "whitespace/indent", "Weird indentation; use %d spaces" % (LINT_STATE.spaces))
 
 
 def check_style(filename, linenumber, clean_lines, errors):
@@ -270,10 +270,10 @@ def check_find_package(filename, linenumber, clean_lines, errors):
     if cmd:
         if cmd.lower() == "include":
             var_name = get_command_argument(linenumber, clean_lines)
-            _package_state.have_included(var_name)
+            PACKAGE_STATE.have_included(var_name)
         elif cmd.lower() == "find_package_handle_standard_args":
             var_name = get_command_argument(linenumber, clean_lines)
-            _package_state.have_used_standard_args(filename, linenumber, var_name, errors)
+            PACKAGE_STATE.have_used_standard_args(filename, linenumber, var_name, errors)
 
 
 def process_line(filename, linenumber, clean_lines, errors):
@@ -298,11 +298,11 @@ def is_valid_file(filename):
 
 def process_file(filename):
     # Store and then restore the filters to prevent pragmas in the file from persisting.
-    original_filters = list(_lint_state.filters)
+    original_filters = list(LINT_STATE.filters)
     try:
         return _process_file(filename)
     finally:
-        _lint_state.filters = original_filters
+        LINT_STATE.filters = original_filters
 
 
 def check_lint_pragma(filename, linenumber, line, errors=None):
@@ -310,7 +310,7 @@ def check_lint_pragma(filename, linenumber, line, errors=None):
     linter_pragma_start = "# lint_cmake: "
     if line.startswith(linter_pragma_start):
         try:
-            _lint_state.set_filters(line[len(linter_pragma_start) :])
+            LINT_STATE.set_filters(line[len(linter_pragma_start) :])
         except ValueError as ex:
             if errors:
                 errors(filename, linenumber, "syntax", str(ex))
@@ -324,8 +324,8 @@ def _process_file(filename):
     if not is_valid_file(filename):
         print("Ignoring file: " + filename)
         return
-    global _package_state
-    _package_state = _CMakePackageState()
+    global PACKAGE_STATE
+    PACKAGE_STATE = _CMakePackageState()
     for line in open(filename).readlines():
         line = line.rstrip("\n")
         if line.endswith("\r"):
@@ -341,4 +341,4 @@ def _process_file(filename):
     clean_lines = CleansedLines(lines)
     for line in clean_lines.line_numbers():
         process_line(filename, line, clean_lines, error)
-    _package_state.done(filename, error)
+    PACKAGE_STATE.done(filename, error)

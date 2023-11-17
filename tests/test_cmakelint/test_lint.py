@@ -184,14 +184,14 @@ def test_bad_pragma():
     do_test_multi_line_lint(
         ("# lint_cmake: I am badly formed\n" "if(TRUE)\n" "endif()\n"), "Filter should start with - or +"
     )
-    cmakelint.state._lint_state.reset()
+    cmakelint.state.LINT_STATE.reset()
 
 
 def test_bad_pragma2():
     do_test_multi_line_lint(
         ("# lint_cmake: -unknown thing\n" "if(TRUE)\n" "endif()\n"), "Filter not allowed: -unknown thing"
     )
-    cmakelint.state._lint_state.reset()
+    cmakelint.state.LINT_STATE.reset()
 
 
 def test_whitespace_issue16():
@@ -238,18 +238,18 @@ def test_false_positive_source_compiles():
 
 def test_indent():
     try:
-        cmakelint.state._lint_state.spaces = 2
+        cmakelint.state.LINT_STATE.spaces = 2
         do_test_lint("no_indent(test)", "")
         do_test_lint("  two_indent(test)", "")
         do_test_lint("    four_indent(test)", "")
         do_test_lint(" one_indent(test)", "Weird indentation; use 2 spaces")
         do_test_lint("   three_indent(test)", "Weird indentation; use 2 spaces")
 
-        cmakelint.state._lint_state.spaces = 3
+        cmakelint.state.LINT_STATE.spaces = 3
         do_test_lint("no_indent(test)", "")
         do_test_lint("  two_indent(test)", "Weird indentation; use 3 spaces")
         do_test_lint("    four_indent(test)", "Weird indentation; use 3 spaces")
         do_test_lint(" one_indent(test)", "Weird indentation; use 3 spaces")
         do_test_lint("   three_indent(test)", "")
     finally:
-        cmakelint.state._lint_state.reset()
+        cmakelint.state.LINT_STATE.reset()

@@ -142,5 +142,5 @@ class _CMakePackageState:
         self.sets.append(var)
 
 
-_lint_state = _CMakeLintState()
-_package_state = _CMakePackageState()
+LINT_STATE = _CMakeLintState()
+PACKAGE_STATE = _CMakePackageState()

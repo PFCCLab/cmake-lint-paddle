@@ -20,7 +20,7 @@ import sys
 from cmakelint.cli import parse_args
 from cmakelint.error_code import ERROR_CODE_FOUND_ISSUE
 from cmakelint.lint import process_file
-from cmakelint.state import _lint_state
+from cmakelint.state import LINT_STATE
 
 
 def main():
@@ -28,9 +28,9 @@ def main():
 
     for filename in files:
         process_file(filename)
-    if _lint_state.errors > 0 or not _lint_state.quiet:
-        sys.stderr.write(f"Total Errors: {_lint_state.errors}\n")
-    if _lint_state.errors > 0:
+    if LINT_STATE.errors > 0 or not LINT_STATE.quiet:
+        sys.stderr.write(f"Total Errors: {LINT_STATE.errors}\n")
+    if LINT_STATE.errors > 0:
         return ERROR_CODE_FOUND_ISSUE
     else:
         return 0

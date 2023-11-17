@@ -89,7 +89,7 @@ def do_test_check_find_package(filename, code, expected_message):
     clean_lines = cmakelint.lint.CleansedLines(code.split("\n"))
     for i in clean_lines.line_numbers():
         cmakelint.lint.check_find_package(filename, i, clean_lines, errors)
-    cmakelint.state._package_state.done(filename, errors)
+    cmakelint.state.PACKAGE_STATE.done(filename, errors)
     assert errors.results() == expected_message
 
 
