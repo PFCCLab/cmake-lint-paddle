@@ -18,17 +18,29 @@ pip install cmake-lint-paddle
 
 ## Usage
 
-```
-Syntax: cmakelint [--config=file] [--filter=-x,+y] <file> [file] ...
-   filter=-x,+y,...
-   Specify a comma separated list of filters to apply
+```bash
+cmakelint --help
+usage: cmakelint [-h] [-v] [--filter -X,+Y] [--config CONFIG] [--spaces SPACES] [--linelength LINELENGTH] [--quiet] [files ...]
 
-config=file
-   Use the given file for configuration. By default the file
-   $PWD/.cmakelintrc, ~/.config/cmakelintrc, $XDG_CONFIG_DIR/cmakelintrc or
-   ~/.cmakelintrc is used if it exists. Use the value "None" to use no
-   configuration file (./None for a file called literally None) Only the
-   option "filter=" is currently supported in this file.
+cmakelint
+
+positional arguments:
+  files                 files to lint
+
+options:
+  -h, --help            show this help message and exit
+  -v, --version         show program's version number and exit
+  --filter -X,+Y        Specify a comma separated list of filters to apply
+  --config CONFIG       Use the given file for configuration. By default the file $PWD/.cmakelintrc, ~/.config/cmakelintrc,
+                        $XDG_CONFIG_DIR/cmakelintrc or ~/.cmakelintrc is used if it exists. Use the value "None" to use no configuration file
+                        (./None for a file called literally None) Only the option "filter=" is currently supported in this file.
+  --spaces SPACES       Indentation should be a multiple of N spaces
+  --linelength LINELENGTH
+                        This is the allowed line length for the project. The default value is 80 characters.
+  --quiet               makes output quiet unless errors occurs Mainly used by automation tools when parsing huge amount of files. In those
+                        cases actual error might get lost in the pile of other stats prints. This argument is also handy for build system
+                        integration, so it's possible to add automated lint target to a project and invoke it via build system and have no
+                        pollution of terminals or IDE.
 ```
 
 Run the `--filter=` option with no filter to see available options. Currently
