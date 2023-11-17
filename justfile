@@ -1,9 +1,11 @@
 set positional-arguments
 
-PYTHON := ".venv/bin/python"
+PYTHON_DIR := if os_family() == "windows" { "./.venv/Scripts" } else { "./.venv/bin" }
+PYTHON := PYTHON_DIR + if os_family() == "windows" { "/python.exe" } else { "/python3" }
+SYSTEM_PYTHON := if os_family() == "windows" { "py.exe -3" } else { "python3" }
 
 create-venv:
-  python3 -m venv .venv
+  {{SYSTEM_PYTHON}} -m venv .venv
 
 install:
   {{PYTHON}} -m pip install -e ".[dev]"
