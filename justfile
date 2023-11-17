@@ -1,6 +1,6 @@
 set positional-arguments
 
-PYTHON := ".venv/bin/python"
+PYTHON := if os_family() == "windows" { ".venv/bin/python.exe" } else { ".venv/bin/python" }
 
 create-venv:
   python3 -m venv .venv
