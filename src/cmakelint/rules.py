@@ -16,7 +16,19 @@ the License.
 
 from __future__ import annotations
 
-from . import cli as cli
-from . import error_code as error_code
-from . import rules as rules
-from . import state as state
+ERROR_CATEGORIES = """\
+        convention/filename
+        linelength
+        package/consistency
+        package/stdargs
+        readability/logic
+        readability/mixedcase
+        readability/wonkycase
+        syntax
+        whitespace/eol
+        whitespace/extra
+        whitespace/indent
+        whitespace/mismatch
+        whitespace/newline
+        whitespace/tabs
+"""

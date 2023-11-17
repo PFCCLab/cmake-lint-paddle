@@ -15,12 +15,13 @@ the License.
 
 from __future__ import annotations
 
-import argparse
 import os
 import re
 import sys
 
-import cmakelint.__version__
+from cmakelint.cli import parse_args
+from cmakelint.error_code import ERROR_CODE_FOUND_ISSUE
+from cmakelint.state import _CMakePackageState, _lint_state, _package_state, is_find_package
 
 _RE_COMMAND = re.compile(r"^\s*(\w+)(\s*)\(", re.VERBOSE)
 _RE_COMMAND_START_SPACES = re.compile(r"^\s*\w+\s*\((\s*)", re.VERBOSE)
@@ -35,146 +36,6 @@ endif
 endmacro
 endwhile
 """.split()
-
-_ERROR_CATEGORIES = """\
-        convention/filename
-        linelength
-        package/consistency
-        package/stdargs
-        readability/logic
-        readability/mixedcase
-        readability/wonkycase
-        syntax
-        whitespace/eol
-        whitespace/extra
-        whitespace/indent
-        whitespace/mismatch
-        whitespace/newline
-        whitespace/tabs
-"""
-_DEFAULT_FILENAME = "CMakeLists.txt"
-_ERROR_CODE_FOUND_ISSUE = 1
-_ERROR_CODE_WRONG_USAGE = 32
-
-
-def default_rc():
-    """
-    Check current working directory and XDG_CONFIG_DIR before ~/.cmakelintrc
-    """
-    cwdfile = os.path.join(os.getcwd(), ".cmakelintrc")
-    if os.path.exists(cwdfile):
-        return cwdfile
-    xdg = os.path.join(os.path.expanduser("~"), ".config")
-    if "XDG_CONFIG_DIR" in os.environ:
-        xdg = os.environ["XDG_CONFIG_DIR"]
-    xdgfile = os.path.join(xdg, "cmakelintrc")
-    if os.path.exists(xdgfile):
-        return xdgfile
-    return os.path.join(os.path.expanduser("~"), ".cmakelintrc")
-
-
-_DEFAULT_CMAKELINTRC = default_rc()
-
-
-class _CMakeLintState:
-    def __init__(self):
-        self.filters = []
-        self.config: str | None = _DEFAULT_CMAKELINTRC
-        self.errors = 0
-        self.spaces = 2
-        self.linelength = 80
-        self.allowed_categories = _ERROR_CATEGORIES.split()
-        self.quiet = False
-
-    def set_filters(self, filters):
-        if not filters:
-            return
-        assert isinstance(self.filters, list)
-        if isinstance(filters, list):
-            self.filters.extend(filters)
-        elif isinstance(filters, str):
-            self.filters.extend([f.strip() for f in filters.split(",") if f])
-        else:
-            raise ValueError("Filters should be a list or a comma separated string")
-        for f in self.filters:
-            if f.startswith("-") or f.startswith("+"):
-                allowed = False
-                for c in self.allowed_categories:
-                    if c.startswith(f[1:]):
-                        allowed = True
-                if not allowed:
-                    raise ValueError("Filter not allowed: %s" % f)
-            else:
-                raise ValueError("Filter should start with - or +")
-
-    def set_spaces(self, spaces: int):
-        self.spaces = spaces
-
-    def set_quiet(self, quiet: bool):
-        self.quiet = quiet
-
-    def set_line_length(self, linelength):
-        self.linelength = int(linelength)
-
-    def reset(self):
-        self.filters = []
-        self.config = _DEFAULT_CMAKELINTRC
-        self.errors = 0
-        self.spaces = 2
-        self.linelength = 80
-        self.allowed_categories = _ERROR_CATEGORIES.split()
-        self.quiet = False
-
-
-class _CMakePackageState:
-    def __init__(self):
-        self.sets = []
-        self.have_included_stdargs = False
-        self.have_used_stdargs = False
-
-    def check(self, filename, linenumber, clean_lines, errors):
-        pass
-
-    def _get_expected(self, filename):
-        package = os.path.basename(filename)
-        package = re.sub(r"^Find(.*)\.cmake", lambda m: m.group(1), package)
-        return package.upper()
-
-    def done(self, filename, errors):
-        try:
-            if not is_find_package(filename):
-                return
-            if self.have_included_stdargs and self.have_used_stdargs:
-                return
-            if not self.have_included_stdargs:
-                errors(filename, 0, "package/consistency", "Package should include FindPackageHandleStandardArgs")
-            if not self.have_used_stdargs:
-                errors(filename, 0, "package/consistency", "Package should use FIND_PACKAGE_HANDLE_STANDARD_ARGS")
-        finally:
-            self.have_used_stdargs = False
-            self.have_included_stdargs = False
-
-    def have_used_standard_args(self, filename, linenumber, var, errors):
-        expected = self._get_expected(filename)
-        self.have_used_stdargs = True
-        if expected != var:
-            errors(
-                filename,
-                linenumber,
-                "package/stdargs",
-                "Weird variable passed to std args, should be " + expected + " not " + var,
-            )
-
-    def have_included(self, var):
-        if var == "FindPackageHandleStandardArgs":
-            self.have_included_stdargs = True
-
-    def set(self, var):
-        self.sets.append(var)
-
-
-_lint_state = _CMakeLintState()
-_package_state = _CMakePackageState()
 
 
 def clean_comments(line, quote=False):
@@ -392,10 +253,6 @@ def check_file_name(filename, errors):
             errors(filename, 0, "convention/filename", "File should be called CMakeLists.txt")
 
 
-def is_find_package(filename):
-    return os.path.basename(filename).startswith("Find") and filename.endswith(".cmake")
-
-
 def get_command_argument(linenumber, clean_lines):
     line = clean_lines.lines[linenumber]
     skip = get_command(line)
@@ -489,118 +346,6 @@ def _process_file(filename):
     _package_state.done(filename, error)
 
 
-def print_version():
-    sys.stderr.write("cmakelint %s\n" % cmakelint.__version__.VERSION)
-    sys.exit(0)
-
-
-def print_categories():
-    sys.stderr.write(_ERROR_CATEGORIES)
-    sys.exit(0)
-
-
-def parse_option_file(contents, ignore_space):
-    filters = None
-    spaces = None
-    linelength = None
-    for line in contents:
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("filter="):
-            filters = line.replace("filter=", "")
-        if line.startswith("spaces="):
-            spaces = line.replace("spaces=", "")
-        if line == "quiet":
-            _lint_state.set_quiet(True)
-        if line.startswith("linelength="):
-            linelength = line.replace("linelength=", "")
-    _lint_state.set_filters(filters)
-    if spaces and not ignore_space:
-        _lint_state.set_spaces(int(spaces.strip()))
-    if linelength is not None:
-        _lint_state.set_line_length(linelength)
-
-
-class ArgumentParser(argparse.ArgumentParser):
-    def error(self, message):
-        self.print_usage(sys.stderr)
-        self.exit(_ERROR_CODE_WRONG_USAGE, f"{self.prog}: error: {message}\n")
-
-
-def parse_args(argv):
-    parser = ArgumentParser("cmakelint", description="cmakelint")
-    parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {cmakelint.__version__.VERSION}")
-    parser.add_argument("files", nargs="*", help="files to lint")
-    parser.add_argument(
-        "--filter", default=None, metavar="-X,+Y", help="Specify a comma separated list of filters to apply"
-    )
-    parser.add_argument(
-        "--config",
-        default=None,
-        help="""
-        Use the given file for configuration. By default the file
-        $PWD/.cmakelintrc, ~/.config/cmakelintrc, $XDG_CONFIG_DIR/cmakelintrc or
-        ~/.cmakelintrc is used if it exists. Use the value "None" to use no
-        configuration file (./None for a file called literally None) Only the
-        option "filter=" is currently supported in this file.
-        """,
-    )
-    parser.add_argument("--spaces", type=int, default=None, help="Indentation should be a multiple of N spaces")
-    parser.add_argument(
-        "--linelength",
-        type=int,
-        default=None,
-        help="This is the allowed line length for the project. The default value is 80 characters.",
-    )
-    parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="""
-        makes output quiet unless errors occurs
-        Mainly used by automation tools when parsing huge amount of files.
-        In those cases actual error might get lost in the pile of other stats
-        prints.
-
-        This argument is also handy for build system integration, so it's
-        possible to add automated lint target to a project and invoke it
-        via build system and have no pollution of terminals or IDE.
-        """,
-    )
-
-    args = parser.parse_args(argv)
-    ignore_space = args.spaces is not None
-    if args.config is not None:
-        if args.config == "None":
-            _lint_state.config = None
-        elif args.config is not None:
-            _lint_state.config = args.config
-    if args.linelength is not None:
-        _lint_state.set_line_length(args.linelength)
-    if args.spaces is not None:
-        _lint_state.set_spaces(args.spaces)
-    if args.filter is not None:
-        if args.filter == "":
-            print_categories()
-    _lint_state.set_quiet(args.quiet)
-
-    try:
-        if _lint_state.config and os.path.isfile(_lint_state.config):
-            with open(_lint_state.config) as f:
-                parse_option_file(f.readlines(), ignore_space)
-        _lint_state.set_filters(args.filter)
-    except ValueError as e:
-        parser.error(str(e))
-
-    filenames = args.files
-    if not filenames:
-        if os.path.isfile(_DEFAULT_FILENAME):
-            filenames = [_DEFAULT_FILENAME]
-        else:
-            parser.error("No files were specified!")
-    return filenames
-
-
 def main():
     files = parse_args(sys.argv[1:])
 
@@ -609,7 +354,7 @@ def main():
     if _lint_state.errors > 0 or not _lint_state.quiet:
         sys.stderr.write("Total Errors: %d\n" % _lint_state.errors)
     if _lint_state.errors > 0:
-        return _ERROR_CODE_FOUND_ISSUE
+        return ERROR_CODE_FOUND_ISSUE
     else:
         return 0
 

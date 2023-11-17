@@ -23,7 +23,7 @@ import pytest
 
 import cmakelint.__main__
 import cmakelint.__version__
-from cmakelint.__main__ import _DEFAULT_FILENAME
+from cmakelint.cli import _DEFAULT_FILENAME
 
 from .utils import (
     do_test_check_file_name,
@@ -193,14 +193,14 @@ def test_bad_pragma():
     do_test_multi_line_lint(
         ("# lint_cmake: I am badly formed\n" "if(TRUE)\n" "endif()\n"), "Filter should start with - or +"
     )
-    cmakelint.__main__._lint_state.reset()
+    cmakelint.state._lint_state.reset()
 
 
 def test_bad_pragma2():
     do_test_multi_line_lint(
         ("# lint_cmake: -unknown thing\n" "if(TRUE)\n" "endif()\n"), "Filter not allowed: -unknown thing"
     )
-    cmakelint.__main__._lint_state.reset()
+    cmakelint.state._lint_state.reset()
 
 
 def test_whitespace_issue16():
@@ -247,29 +247,27 @@ def test_false_positive_source_compiles():
 
 def test_indent():
     try:
-        cmakelint.__main__._lint_state.spaces = 2
+        cmakelint.state._lint_state.spaces = 2
         do_test_lint("no_indent(test)", "")
         do_test_lint("  two_indent(test)", "")
         do_test_lint("    four_indent(test)", "")
         do_test_lint(" one_indent(test)", "Weird indentation; use 2 spaces")
         do_test_lint("   three_indent(test)", "Weird indentation; use 2 spaces")
 
-        cmakelint.__main__._lint_state.spaces = 3
+        cmakelint.state._lint_state.spaces = 3
         do_test_lint("no_indent(test)", "")
         do_test_lint("  two_indent(test)", "Weird indentation; use 3 spaces")
         do_test_lint("    four_indent(test)", "Weird indentation; use 3 spaces")
         do_test_lint(" one_indent(test)", "Weird indentation; use 3 spaces")
         do_test_lint("   three_indent(test)", "")
     finally:
-        cmakelint.__main__._lint_state.reset()
+        cmakelint.state._lint_state.reset()
 
 
 def test_parse_args():
-    old_version = cmakelint.__version__.VERSION
-    old_cats = cmakelint.__main__._ERROR_CATEGORIES
+    old_cats = cmakelint.rules.ERROR_CATEGORIES
     try:
-        cmakelint.__main__._ERROR_CATEGORIES = ""
-        cmakelint.__main__._VERSION = ""
+        cmakelint.rules.ERROR_CATEGORIES = ""
         with nostderr():
             pytest.raises(SystemExit, cmakelint.__main__.parse_args, [])
             pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--help"])
@@ -279,35 +277,35 @@ def test_parse_args():
             pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--filter=+x,b,-c", "foo.cmake"])
             pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--spaces=c", "foo.cmake"])
             pytest.raises(SystemExit, cmakelint.__main__.parse_args, ["--version"])
-        cmakelint.__main__._lint_state.filters = []
+        cmakelint.state._lint_state.filters = []
         assert cmakelint.__main__.parse_args(["--filter=-whitespace", "foo.cmake"]) == ["foo.cmake"]
-        cmakelint.__main__._lint_state.filters = []
+        cmakelint.state._lint_state.filters = []
         assert cmakelint.__main__.parse_args(["foo.cmake"]) == ["foo.cmake"]
         filt = "-,+whitespace"
-        cmakelint.__main__._lint_state.filters = []
+        cmakelint.state._lint_state.filters = []
 
         assert cmakelint.__main__.parse_args(["--config=None", "--spaces=3", "--filter=" + filt, "foo.cmake"]) == [
             "foo.cmake"
         ]
-        assert cmakelint.__main__._lint_state.filters == ["-", "+whitespace"]
-        assert cmakelint.__main__._lint_state.spaces == 3
-        cmakelint.__main__._lint_state.filters = []
+        assert cmakelint.state._lint_state.filters == ["-", "+whitespace"]
+        assert cmakelint.state._lint_state.spaces == 3
+        cmakelint.state._lint_state.filters = []
         filt = "-,+whitespace/eol, +whitespace/tabs"
         assert cmakelint.__main__.parse_args(["--config=None", "--spaces=3", "--filter=" + filt, "foo.cmake"]) == [
             "foo.cmake"
         ]
-        assert cmakelint.__main__._lint_state.filters == ["-", "+whitespace/eol", "+whitespace/tabs"]
+        assert cmakelint.state._lint_state.filters == ["-", "+whitespace/eol", "+whitespace/tabs"]
 
-        cmakelint.__main__._lint_state.filters = []
+        cmakelint.state._lint_state.filters = []
         cmakelint.__main__.parse_args(["--config=./foo/bar", "foo.cmake"])
-        assert cmakelint.__main__._lint_state.config == "./foo/bar"
+        assert cmakelint.state._lint_state.config == "./foo/bar"
 
         cmakelint.__main__.parse_args(["--config=None", "foo.cmake"])
-        assert cmakelint.__main__._lint_state.config is None
-        cmakelint.__main__._lint_state.reset()
+        assert cmakelint.state._lint_state.config is None
+        cmakelint.state._lint_state.reset()
 
         cmakelint.__main__.parse_args(["foo.cmake"])
-        assert cmakelint.__main__._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
+        assert cmakelint.state._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
 
         original_isfile = os.path.isfile
 
@@ -319,19 +317,18 @@ def test_parse_args():
         patcher = mock.patch("os.path.isfile", patched_isfile)
         with patcher:
             assert cmakelint.__main__.parse_args([]) == ["CMakeLists.txt"]
-            assert cmakelint.__main__._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
+            assert cmakelint.state._lint_state.config == str(Path("~").expanduser() / ".cmakelintrc")
 
     finally:
-        cmakelint.__main__._ERROR_CATEGORIES = old_cats
-        cmakelint.__main__._VERSION = old_version
-        cmakelint.__main__._lint_state.reset()
+        cmakelint.rules.ERROR_CATEGORIES = old_cats
+        cmakelint.state._lint_state.reset()
 
 
-def testParseOptionsFile():
-    old_cats = cmakelint.__main__._ERROR_CATEGORIES
+def test_parse_options_file():
+    old_cats = cmakelint.rules.ERROR_CATEGORIES
     try:
-        cmakelint.__main__._ERROR_CATEGORIES = ""
-        cmakelint.__main__.parse_option_file(
+        cmakelint.rules.ERROR_CATEGORIES = ""
+        cmakelint.cli.parse_option_file(
             """
                 # skip comment
                 filter=-,+whitespace
@@ -339,54 +336,54 @@ def testParseOptionsFile():
                 """.split("\n"),
             ignore_space=False,
         )
-        assert cmakelint.__main__._lint_state.filters == ["-", "+whitespace"]
-        cmakelint.__main__.parse_args(["--filter=+syntax", "foo.cmake"])
-        assert cmakelint.__main__._lint_state.filters == ["-", "+whitespace", "+syntax"]
-        assert cmakelint.__main__._lint_state.spaces == 3
+        assert cmakelint.state._lint_state.filters == ["-", "+whitespace"]
+        cmakelint.cli.parse_args(["--filter=+syntax", "foo.cmake"])
+        assert cmakelint.state._lint_state.filters == ["-", "+whitespace", "+syntax"]
+        assert cmakelint.state._lint_state.spaces == 3
 
-        cmakelint.__main__._lint_state.spaces = 2
-        cmakelint.__main__.parse_option_file(
+        cmakelint.state._lint_state.spaces = 2
+        cmakelint.cli.parse_option_file(
             """
                 # skip comment
                 spaces= 4
                 """.split("\n"),
             ignore_space=True,
         )
-        assert cmakelint.__main__._lint_state.spaces == 2
+        assert cmakelint.state._lint_state.spaces == 2
 
-        cmakelint.__main__.parse_option_file(
+        cmakelint.cli.parse_option_file(
             """
                 # skip comment
                 linelength= 90
                 """.split("\n"),
             ignore_space=True,
         )
-        assert cmakelint.__main__._lint_state.linelength == 90
+        assert cmakelint.state._lint_state.linelength == 90
 
-        cmakelint.__main__.parse_option_file(
+        cmakelint.cli.parse_option_file(
             """
                 # skip comment
                 """.split("\n"),
             ignore_space=False,
         )
-        assert cmakelint.__main__._lint_state.spaces == 2
+        assert cmakelint.state._lint_state.spaces == 2
 
-        cmakelint.__main__.parse_option_file(
+        cmakelint.cli.parse_option_file(
             """
                 quiet
                 """.split("\n"),
             ignore_space=False,
         )
-        assert cmakelint.__main__._lint_state.quiet
+        assert cmakelint.state._lint_state.quiet
 
-        cmakelint.__main__._lint_state.quiet = True
-        cmakelint.__main__.parse_option_file(
+        cmakelint.state._lint_state.quiet = True
+        cmakelint.cli.parse_option_file(
             """
                 # quiet
                 """.split("\n"),
             ignore_space=False,
         )
-        assert cmakelint.__main__._lint_state.quiet
+        assert cmakelint.state._lint_state.quiet
     finally:
-        cmakelint.__main__._ERROR_CATEGORIES = old_cats
-        cmakelint.__main__._lint_state.reset()
+        cmakelint.rules.ERROR_CATEGORIES = old_cats
+        cmakelint.state._lint_state.reset()

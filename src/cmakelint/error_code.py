@@ -16,7 +16,5 @@ the License.
 
 from __future__ import annotations
 
-from . import cli as cli
-from . import error_code as error_code
-from . import rules as rules
-from . import state as state
+ERROR_CODE_FOUND_ISSUE = 1
+ERROR_CODE_WRONG_USAGE = 32
