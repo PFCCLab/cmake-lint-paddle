@@ -1,8 +1,13 @@
 # CMakeLint
 
-![PyPI](https://img.shields.io/pypi/v/cmake-lint-paddle.svg)
-![PyPI - Downloads](https://img.shields.io/pypi/dd/cmake-lint-paddle.svg)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/cmake-lint-paddle.svg)
+<p align="center">
+   <a href="https://python.org/" target="_blank"><img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/cmake-lint-paddle?logo=python&style=flat-square"></a>
+   <a href="https://pypi.org/project/cmake-lint-paddle/" target="_blank"><img src="https://img.shields.io/pypi/v/cmake-lint-paddle?style=flat-square" alt="pypi"></a>
+   <a href="https://pypi.org/project/cmake-lint-paddle/" target="_blank"><img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/cmake-lint-paddle?style=flat-square"></a>
+   <a href="LICENSE"><img alt="LICENSE" src="https://img.shields.io/github/license/PFCCLab/cmake-lint-paddle?style=flat-square"></a>
+   <a href="https://github.com/astral-sh/ruff"><img alt="ruff" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square"></a>
+   <a href="https://gitmoji.dev"><img src="https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67?style=flat-square" alt="Gitmoji"></a>
+</p>
 
 cmakelint parses CMake files and reports style issues.
 
