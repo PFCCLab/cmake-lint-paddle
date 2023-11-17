@@ -25,6 +25,7 @@ BASE_CMD = f"{sys.executable} -m cmakelint"
 
 
 MAX_DIFF = None
+ENDLINE = "\r\n" if sys.platform == "win32" else "\n"
 
 
 def with_base_cmd(args: list[str]):
@@ -55,6 +56,6 @@ def run_command(rel_cwd, args):
     status, stdout, stderr = run_shell_command(cmd, cwd)
     return {
         "status": status,
-        "stdout": stdout.decode("utf8").split("\n"),
-        "stderr": stderr.decode("utf8").split("\n"),
+        "stdout": stdout.decode("utf8").split(ENDLINE),
+        "stderr": stderr.decode("utf8").split(ENDLINE),
     }
