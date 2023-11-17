@@ -15,7 +15,7 @@ the License.
 
 from __future__ import annotations
 
-import getopt
+import argparse
 import os
 import re
 import sys
@@ -88,6 +88,8 @@ _ERROR_CATEGORIES = """\
         whitespace/tabs
 """
 _DEFAULT_FILENAME = "CMakeLists.txt"
+_ERROR_CODE_FOUND_ISSUE = 1
+_ERROR_CODE_WRONG_USAGE = 32
 
 
 def default_rc():
@@ -112,7 +114,7 @@ _DEFAULT_CMAKELINTRC = default_rc()
 class _CMakeLintState:
     def __init__(self):
         self.filters = []
-        self.config = 0
+        self.config: str | None = _DEFAULT_CMAKELINTRC
         self.errors = 0
         self.spaces = 2
         self.linelength = 80
@@ -140,10 +142,10 @@ class _CMakeLintState:
             else:
                 raise ValueError("Filter should start with - or +")
 
-    def set_spaces(self, spaces):
-        self.spaces = int(spaces.strip())
+    def set_spaces(self, spaces: int):
+        self.spaces = spaces
 
-    def set_quiet(self, quiet):
+    def set_quiet(self, quiet: bool):
         self.quiet = quiet
 
     def set_line_length(self, linelength):
@@ -151,7 +153,7 @@ class _CMakeLintState:
 
     def reset(self):
         self.filters = []
-        self.config = 0
+        self.config = _DEFAULT_CMAKELINTRC
         self.errors = 0
         self.spaces = 2
         self.linelength = 80
@@ -527,13 +529,6 @@ def print_version():
     sys.exit(0)
 
 
-def print_usage(message):
-    sys.stderr.write(_USAGE)
-    if message:
-        sys.stderr.write("FATAL ERROR: %s\n" % message)
-    sys.exit(32)
-
-
 def print_categories():
     sys.stderr.write(_ERROR_CATEGORIES)
     sys.exit(0)
@@ -557,66 +552,57 @@ def parse_option_file(contents, ignore_space):
             linelength = line.replace("linelength=", "")
     _lint_state.set_filters(filters)
     if spaces and not ignore_space:
-        _lint_state.set_spaces(spaces)
+        _lint_state.set_spaces(int(spaces.strip()))
     if linelength is not None:
         _lint_state.set_line_length(linelength)
 
 
-def open_text_file(filename):
-    return open(filename, newline=None)
+class ArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(_ERROR_CODE_WRONG_USAGE, f"{self.prog}: error: {message}\n")
 
 
 def parse_args(argv):
-    try:
-        (opts, filenames) = getopt.getopt(
-            argv, "", ["help", "filter=", "config=", "spaces=", "linelength=", "quiet", "version"]
-        )
-    except getopt.GetoptError:
-        print_usage("Invalid Arguments")
-    filters = ""
-    _lint_state.config = _DEFAULT_CMAKELINTRC
-    ignore_space = False
-    for opt, val in opts:
-        if opt == "--version":
-            print_version()
-        elif opt == "--help":
-            print_usage(None)
-        elif opt == "--filter":
-            filters = val
-            if not filters:
-                print_categories()
-        elif opt == "--config":
-            _lint_state.config = val
-            if _lint_state.config == "None":
-                _lint_state.config = None
-        elif opt == "--spaces":
-            try:
-                _lint_state.set_spaces(val)
-                ignore_space = True
-            except:  # noqa: E722
-                print_usage("spaces expects an integer value")
-        elif opt == "--quiet":
-            _lint_state.quiet = True
-        elif opt == "--linelength":
-            try:
-                _lint_state.set_line_length(val)
-            except:  # noqa: E722
-                print_usage("line length expects an integer value")
-    try:
-        if _lint_state.config:
-            try:
-                parse_option_file(open_text_file(_lint_state.config).readlines(), ignore_space)
-            except OSError:
-                pass
-        _lint_state.set_filters(filters)
-    except ValueError as ex:
-        print_usage(str(ex))
+    parser = ArgumentParser("cmakelint", description="cmakelint")
+    parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {cmakelint.__version__.VERSION}")
+    parser.add_argument("files", nargs="*", help="files to lint")
+    parser.add_argument("--filter", default=None, metavar="-X,+Y", help="filter to apply")
+    parser.add_argument("--config", default=None, help="config file to use")
+    parser.add_argument("--spaces", type=int, default=None, help="spaces to use")
+    parser.add_argument("--linelength", type=int, default=None, help="line length to use")
+    parser.add_argument("--quiet", action="store_true", help="suppress output")
 
+    args = parser.parse_args(argv)
+    ignore_space = args.spaces is not None
+    if args.config is not None:
+        if args.config == "None":
+            _lint_state.config = None
+        elif args.config is not None:
+            _lint_state.config = args.config
+    if args.linelength is not None:
+        _lint_state.set_line_length(args.linelength)
+    if args.spaces is not None:
+        _lint_state.set_spaces(args.spaces)
+    if args.filter is not None:
+        if args.filter == "":
+            print_categories()
+    _lint_state.set_quiet(args.quiet)
+
+    try:
+        if _lint_state.config and os.path.isfile(_lint_state.config):
+            with open(_lint_state.config) as f:
+                parse_option_file(f.readlines(), ignore_space)
+        _lint_state.set_filters(args.filter)
+    except ValueError as e:
+        parser.error(str(e))
+
+    filenames = args.files
     if not filenames:
         if os.path.isfile(_DEFAULT_FILENAME):
             filenames = [_DEFAULT_FILENAME]
         else:
-            print_usage("No files were specified!")
+            parser.error("No files were specified!")
     return filenames
 
 
@@ -628,7 +614,7 @@ def main():
     if _lint_state.errors > 0 or not _lint_state.quiet:
         sys.stderr.write("Total Errors: %d\n" % _lint_state.errors)
     if _lint_state.errors > 0:
-        return 1
+        return _ERROR_CODE_FOUND_ISSUE
     else:
         return 0
 
