@@ -16,4 +16,19 @@ the License.
 
 from __future__ import annotations
 
-VERSION = "1.5.0"
+ERROR_CATEGORIES = """\
+        convention/filename
+        linelength
+        package/consistency
+        package/stdargs
+        readability/logic
+        readability/mixedcase
+        readability/wonkycase
+        syntax
+        whitespace/eol
+        whitespace/extra
+        whitespace/indent
+        whitespace/mismatch
+        whitespace/newline
+        whitespace/tabs
+"""

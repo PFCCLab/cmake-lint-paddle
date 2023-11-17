@@ -16,4 +16,5 @@ the License.
 
 from __future__ import annotations
 
-VERSION = "1.5.0"
+ERROR_CODE_FOUND_ISSUE = 1
+ERROR_CODE_WRONG_USAGE = 32

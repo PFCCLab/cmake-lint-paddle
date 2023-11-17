@@ -16,7 +16,7 @@ the License.
 
 from __future__ import annotations
 
-from cmakelint.__main__ import _ERROR_CODE_WRONG_USAGE
+from cmakelint.error_code import ERROR_CODE_WRONG_USAGE
 
 from .utils import run_shell_command, with_base_cmd
 
@@ -30,6 +30,6 @@ def test_help():
 
 def test_wrong_usage():
     (status, out, err) = run_shell_command(with_base_cmd(["--unknown-option"]))
-    assert status == _ERROR_CODE_WRONG_USAGE
+    assert status == ERROR_CODE_WRONG_USAGE
     assert out == b""
     assert err.startswith(b"usage: cmakelint [-h] [-v] [--filter -X,+Y] [--config CONFIG]"), err

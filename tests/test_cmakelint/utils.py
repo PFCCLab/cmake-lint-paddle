@@ -19,7 +19,7 @@ from __future__ import annotations
 import contextlib
 import sys
 
-import cmakelint.__main__
+import cmakelint
 
 
 # stderr suppression from https://stackoverflow.com/a/1810086
@@ -46,7 +46,7 @@ class ErrorCollector:
         self._errors = []
 
     def __call__(self, unused_filename, unused_line, category, message):
-        if cmakelint.__main__.should_print_error(category):
+        if cmakelint.lint.should_print_error(category):
             self._errors.append(message)
 
     def results(self):
@@ -57,42 +57,42 @@ class ErrorCollector:
 
 def do_test_lint(code, expected_message):
     errors = ErrorCollector()
-    clean_lines = cmakelint.__main__.CleansedLines([code])
-    cmakelint.__main__.process_line("foo.cmake", 0, clean_lines, errors)
+    clean_lines = cmakelint.lint.CleansedLines([code])
+    cmakelint.lint.process_line("foo.cmake", 0, clean_lines, errors)
     assert errors.results() == expected_message
 
 
 def do_test_multi_line_lint(code, expected_message):
     errors = ErrorCollector()
-    clean_lines = cmakelint.__main__.CleansedLines(code.split("\n"))
+    clean_lines = cmakelint.lint.CleansedLines(code.split("\n"))
     for i in clean_lines.line_numbers():
-        cmakelint.__main__.process_line("foo.cmake", i, clean_lines, errors)
+        cmakelint.lint.process_line("foo.cmake", i, clean_lines, errors)
     assert errors.results() == expected_message
 
 
 def do_test_check_repeat_logic(code, expected_message):
     errors = ErrorCollector()
-    clean_lines = cmakelint.__main__.CleansedLines(code.split("\n"))
+    clean_lines = cmakelint.lint.CleansedLines(code.split("\n"))
     for i in clean_lines.line_numbers():
-        cmakelint.__main__.check_repeat_logic("foo.cmake", i, clean_lines, errors)
+        cmakelint.lint.check_repeat_logic("foo.cmake", i, clean_lines, errors)
     assert errors.results() == expected_message
 
 
 def do_test_check_file_name(filename, expected_message):
     errors = ErrorCollector()
-    cmakelint.__main__.check_file_name(filename, errors)
+    cmakelint.lint.check_file_name(filename, errors)
     assert errors.results() == expected_message
 
 
 def do_test_check_find_package(filename, code, expected_message):
     errors = ErrorCollector()
-    clean_lines = cmakelint.__main__.CleansedLines(code.split("\n"))
+    clean_lines = cmakelint.lint.CleansedLines(code.split("\n"))
     for i in clean_lines.line_numbers():
-        cmakelint.__main__.check_find_package(filename, i, clean_lines, errors)
-    cmakelint.__main__._package_state.done(filename, errors)
+        cmakelint.lint.check_find_package(filename, i, clean_lines, errors)
+    cmakelint.state.PACKAGE_STATE.done(filename, errors)
     assert errors.results() == expected_message
 
 
 def do_test_get_argument(expected_arg, code):
-    clean_lines = cmakelint.__main__.CleansedLines(code.split("\n"))
-    assert cmakelint.__main__.get_command_argument(0, clean_lines) == expected_arg
+    clean_lines = cmakelint.lint.CleansedLines(code.split("\n"))
+    assert cmakelint.lint.get_command_argument(0, clean_lines) == expected_arg
