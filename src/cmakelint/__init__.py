@@ -18,5 +18,6 @@ from __future__ import annotations
 
 from . import cli as cli
 from . import error_code as error_code
+from . import lint as lint
 from . import rules as rules
 from . import state as state
