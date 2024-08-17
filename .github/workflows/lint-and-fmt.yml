@@ -18,6 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
       - name: Install python
         uses: actions/setup-python@v4
         with:
@@ -31,7 +34,6 @@ jobs:
 
       - name: Initialize venv and install packages
         run: |
-          just create-venv
           just install
 
       - name: lint

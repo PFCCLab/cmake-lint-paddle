@@ -13,7 +13,6 @@ License for the specific language governing permissions and limitations under
 the License.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -162,7 +161,7 @@ def check_command_spaces(filename, linenumber, clean_lines, errors):
     line = clean_lines.lines[linenumber]
     match = contains_command(line)
     if match and len(match.group(2)):
-        errors(filename, linenumber, "whitespace/extra", "Extra spaces between '%s' and its ()" % (match.group(1)))
+        errors(filename, linenumber, "whitespace/extra", f"Extra spaces between '{match.group(1)}' and its ()")
     if match:
         spaces_after_open = len(_RE_COMMAND_START_SPACES.match(line).group(1))
         initial_spaces = get_initial_spaces(line)
@@ -196,7 +195,7 @@ def check_repeat_logic(filename, linenumber, clean_lines, errors):
     """
     line = clean_lines.lines[linenumber]
     for cmd in _logic_commands:
-        if re.search(r"\b%s\b" % cmd, line.lower()):
+        if re.search(rf"\b{cmd}\b", line.lower()):
             m = _RE_LOGIC_CHECK.search(line)
             if m:
                 errors(

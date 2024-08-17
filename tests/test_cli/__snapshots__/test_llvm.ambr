@@ -1,4 +1,3 @@
-# serializer version: 1
 # name: test_llvm_check
   dict({
     'status': 1,

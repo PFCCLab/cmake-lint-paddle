@@ -1,4 +1,3 @@
-# serializer version: 1
 # name: test_invocation
   dict({
     'status': 0,
