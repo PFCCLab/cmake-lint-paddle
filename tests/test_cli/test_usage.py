@@ -13,7 +13,6 @@ License for the specific language governing permissions and limitations under
 the License.
 """
 
-
 from __future__ import annotations
 
 from cmakelint.error_code import ERROR_CODE_WRONG_USAGE

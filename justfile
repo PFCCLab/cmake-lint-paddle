@@ -40,3 +40,6 @@ fmt:
 ci-test:
   uv run pytest
   just clean
+
+fmt-check:
+  uv run ruff format --check --diff .

@@ -42,4 +42,4 @@ jobs:
 
       - name: format check
         run: |
-          just fmt
+          just fmt-check
