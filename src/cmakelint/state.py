@@ -13,7 +13,6 @@ License for the specific language governing permissions and limitations under
 the License.
 """
 
-
 from __future__ import annotations
 
 import os
@@ -72,7 +71,7 @@ class _CMakeLintState:
                     if c.startswith(f[1:]):
                         allowed = True
                 if not allowed:
-                    raise ValueError("Filter not allowed: %s" % f)
+                    raise ValueError(f"Filter not allowed: {f}")
             else:
                 raise ValueError("Filter should start with - or +")
 

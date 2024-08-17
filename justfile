@@ -1,28 +1,20 @@
 set positional-arguments
 
-PYTHON_DIR := if os_family() == "windows" { "./.venv/Scripts" } else { "./.venv/bin" }
-PYTHON := PYTHON_DIR + if os_family() == "windows" { "/python.exe" } else { "/python3" }
-SYSTEM_PYTHON := if os_family() == "windows" { "py.exe -3" } else { "python3" }
-
-create-venv:
-  {{SYSTEM_PYTHON}} -m venv .venv
-
 install:
-  {{PYTHON}} -m pip install -U pip
-  {{PYTHON}} -m pip install -e ".[dev]"
+  uv sync
 
 run *ARGS:
-  {{PYTHON}} -m cmake-lint {{ARGS}}
+  uv run cmakelint {{ARGS}}
 
 test:
-  {{PYTHON}} -m pytest
+  uv run pytest
   just clean
 
 snapshot:
-  {{PYTHON}} -m pytest --snapshot-update
+  uv run pytest --snapshot-update
 
 build:
-  {{PYTHON}} -m build
+  uv tool run --from build python -m build --installer uv .
 
 release version:
   @echo 'Tagging {{version}}...'
@@ -40,11 +32,11 @@ clean-builds:
   rm -rf *.egg-info/
 
 lint:
-  {{PYTHON}} -m ruff check .
+  uv run ruff check .
 
 fmt:
-  {{PYTHON}} -m ruff format .
+  uv run ruff format .
 
 ci-test:
-  {{PYTHON}} -m pytest
+  uv run pytest
   just clean

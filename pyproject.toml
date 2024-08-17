@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "cmake-lint-paddle"
 description = "A fork of cmake-lint for PaddlePaddle"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
   { name = "Richard Quirk", email = "richard.quirk@gmail.com" },
   { name = "Nyakku Shigure", email = "sigure.qaq@gmail.com" },
@@ -19,19 +19,16 @@ classifiers = [
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 dependencies = []
 dynamic = ["version"]
-
-[project.optional-dependencies]
-dev = ["pytest>=7.4.0", "ruff==0.1.5", "syrupy", "build"]
 
 [project.urls]
 Homepage = "https://github.com/PFCCLab/cmake-lint-paddle"
@@ -46,9 +43,12 @@ where = ["src"]
 [tool.setuptools.dynamic]
 version = { attr = "cmakelint.__version__.VERSION" }
 
+[tool.uv]
+dev-dependencies = ["ruff>=0.6.0", "pytest>=7.4.4", "syrupy>=3"]
+
 [tool.ruff]
 line-length = 120
-target-version = "py37"
+target-version = "py38"
 
 [tool.ruff.lint]
 select = [
