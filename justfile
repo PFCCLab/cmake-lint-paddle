@@ -8,6 +8,7 @@ create-venv:
   {{SYSTEM_PYTHON}} -m venv .venv
 
 install:
+  {{PYTHON}} -m pip install -U pip
   {{PYTHON}} -m pip install -e ".[dev]"
 
 run *ARGS:
