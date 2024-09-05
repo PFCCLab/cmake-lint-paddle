@@ -14,7 +14,7 @@ snapshot:
   uv run pytest --snapshot-update
 
 build:
-  uv tool run --from build python -m build --installer uv .
+  uv build
 
 release version:
   @echo 'Tagging {{version}}...'
