@@ -102,10 +102,10 @@ cmakelint can also be run with [pre-commit](https://pre-commit.com). Add the fol
      - id: cmakelint
 ```
 
-# Output status codes
+## Output status codes
 
 The program should exit with the following status codes:
 
--  0 if everything went fine
--  1 if an error message was issued
--  32 on usage error
+-  `0` if everything went fine
+-  `1` if an error message was issued
+-  `32` on usage error
