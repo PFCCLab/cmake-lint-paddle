@@ -10,7 +10,7 @@ test:
   uv run pytest
   just clean
 
-snapshot:
+snapshot-update:
   uv run pytest --snapshot-update
 
 build:
