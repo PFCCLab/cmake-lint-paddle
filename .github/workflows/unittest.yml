@@ -18,25 +18,25 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v2
+        uses: astral-sh/setup-uv@v6
 
       - name: Install python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install just
-        uses: extractions/setup-just@v1
+        uses: extractions/setup-just@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Initialize venv and install packages
+      - name: Install dependencies
         run: |
-          just install
+          just ci-install
 
-      - name: Run Unittest
+      - name: unit test
         run: |
-          just test
+          just ci-test
