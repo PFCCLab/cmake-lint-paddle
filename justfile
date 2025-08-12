@@ -1,7 +1,7 @@
 set positional-arguments
 
 install:
-  uv sync
+  uv sync --all-extras --dev
 
 run *ARGS:
   uv run cmakelint {{ARGS}}
@@ -9,6 +9,13 @@ run *ARGS:
 test:
   uv run pytest
   just clean
+
+fmt:
+  uv run ruff format .
+  prettier --write '**/*.md'
+
+lint:
+  uv run ruff check .
 
 snapshot-update:
   uv run pytest --snapshot-update
@@ -31,11 +38,15 @@ clean-builds:
   rm -rf dist/
   rm -rf *.egg-info/
 
-lint:
-  uv run ruff check .
+ci-install:
+  just install
 
-fmt:
-  uv run ruff format .
+ci-fmt-check:
+  uv run ruff format --check --diff .
+  prettier --check '**/*.md'
+
+ci-lint:
+  just lint
 
 ci-test:
   uv run pytest
