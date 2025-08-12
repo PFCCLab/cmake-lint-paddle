@@ -12,6 +12,7 @@ test:
 
 fmt:
   uv run ruff format .
+  prettier --write '**/*.md'
 
 lint:
   uv run ruff check .
