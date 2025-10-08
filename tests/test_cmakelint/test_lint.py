@@ -105,16 +105,16 @@ def test_command_not_ended():
 
 
 def test_repeat_logic_expression():
-    do_test_check_repeat_logic("else(foo)", "Expression repeated inside else; " "better to use only else()")
+    do_test_check_repeat_logic("else(foo)", "Expression repeated inside else; better to use only else()")
     do_test_check_repeat_logic("ELSEIF(NOT ${VAR})", "")
     do_test_check_repeat_logic(
-        "ENDMACRO( my_macro foo bar baz)", "Expression repeated inside endmacro; " "better to use only ENDMACRO()"
+        "ENDMACRO( my_macro foo bar baz)", "Expression repeated inside endmacro; better to use only ENDMACRO()"
     )
 
 
 def test_find_tool():
     do_test_check_file_name(
-        "path/to/FindFooBar.cmake", "Find modules should use uppercase names; " "consider using FindFOOBAR.cmake"
+        "path/to/FindFooBar.cmake", "Find modules should use uppercase names; consider using FindFOOBAR.cmake"
     )
     do_test_check_file_name("CMakeLists.txt", "")
     do_test_check_file_name("cmakeLists.txt", "File should be called CMakeLists.txt")
@@ -177,34 +177,30 @@ def test_is_valid_file():
 
 
 def test_filter_control():
-    do_test_multi_line_lint(("# lint_cmake: -whitespace/eol\n" "  foo() \n" "  foo()\n"), "")
+    do_test_multi_line_lint(("# lint_cmake: -whitespace/eol\n  foo() \n  foo()\n"), "")
 
 
 def test_bad_pragma():
-    do_test_multi_line_lint(
-        ("# lint_cmake: I am badly formed\n" "if(TRUE)\n" "endif()\n"), "Filter should start with - or +"
-    )
+    do_test_multi_line_lint(("# lint_cmake: I am badly formed\nif(TRUE)\nendif()\n"), "Filter should start with - or +")
     cmakelint.state.LINT_STATE.reset()
 
 
 def test_bad_pragma2():
-    do_test_multi_line_lint(
-        ("# lint_cmake: -unknown thing\n" "if(TRUE)\n" "endif()\n"), "Filter not allowed: -unknown thing"
-    )
+    do_test_multi_line_lint(("# lint_cmake: -unknown thing\nif(TRUE)\nendif()\n"), "Filter not allowed: -unknown thing")
     cmakelint.state.LINT_STATE.reset()
 
 
 def test_whitespace_issue16():
-    do_test_multi_line_lint(("if(${CONDITION})\n" "  set(VAR\n" "      foo\n" "      bar\n" "  )\n" "endif()\n"), "")
+    do_test_multi_line_lint(("if(${CONDITION})\n  set(VAR\n      foo\n      bar\n  )\nendif()\n"), "")
 
 
 def test_whitespace_issue16_non_regression():
-    do_test_multi_line_lint(("if(${CONDITION})\n" "  set(VAR\n" "      foo\n" "      bar)\n" "endif()\n"), "")
+    do_test_multi_line_lint(("if(${CONDITION})\n  set(VAR\n      foo\n      bar)\nendif()\n"), "")
 
 
 def test_whitespace_issue16_false_negative():
     do_test_multi_line_lint(
-        ("if(${CONDITION})\n" "  set(VAR\n" "      foo\n" "      bar  )\n" "endif()\n"),
+        ("if(${CONDITION})\n  set(VAR\n      foo\n      bar  )\nendif()\n"),
         "Mismatching spaces inside () after command",
     )
 

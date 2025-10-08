@@ -103,9 +103,7 @@ def check_line_length(filename, linenumber, clean_lines, errors):
     """
     line = clean_lines.raw_lines[linenumber]
     if len(line) > LINT_STATE.linelength:
-        return errors(
-            filename, linenumber, "linelength", "Lines should be <= %d characters long" % (LINT_STATE.linelength)
-        )
+        return errors(filename, linenumber, "linelength", f"Lines should be <= {LINT_STATE.linelength} characters long")
 
 
 def contains_command(line):
@@ -212,7 +210,7 @@ def check_indent(filename, linenumber, clean_lines, errors):
     initial_spaces = get_initial_spaces(line)
     remainder = initial_spaces % LINT_STATE.spaces
     if remainder != 0:
-        errors(filename, linenumber, "whitespace/indent", "Weird indentation; use %d spaces" % (LINT_STATE.spaces))
+        errors(filename, linenumber, "whitespace/indent", f"Weird indentation; use {LINT_STATE.spaces} spaces")
 
 
 def check_style(filename, linenumber, clean_lines, errors):
@@ -243,7 +241,7 @@ def check_file_name(filename, errors):
                 filename,
                 0,
                 "convention/filename",
-                "Find modules should use uppercase names; " "consider using Find" + package.upper() + ".cmake",
+                "Find modules should use uppercase names; consider using Find" + package.upper() + ".cmake",
             )
     else:
         if filename.lower() == "cmakelists.txt" and filename != "CMakeLists.txt":
@@ -336,7 +334,7 @@ def _process_file(filename):
     # Check file name after reading lines incase of a # lint_cmake: pragma
     check_file_name(filename, error)
     if have_cr and os.linesep != "\r\n":
-        error(filename, 0, "whitespace/newline", "Unexpected carriage return found; " "better to use only \\n")
+        error(filename, 0, "whitespace/newline", "Unexpected carriage return found; better to use only \\n")
     clean_lines = CleansedLines(lines)
     for line in clean_lines.line_numbers():
         process_line(filename, line, clean_lines, error)
