@@ -9,11 +9,11 @@ authors = [
   { name = "Nyakku Shigure", email = "sigure.qaq@gmail.com" },
 ]
 keywords = ["cmake", "lint"]
-license = { text = "Apache 2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 classifiers = [
   "Environment :: Console",
   "Operating System :: OS Independent",
-  "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
